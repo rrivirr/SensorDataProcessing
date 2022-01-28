@@ -1,0 +1,20 @@
+interval: 30 minutes
+burst number: 10
+start up delay: 0
+burst delay: 1 minute
+
+slot: 0
+type: generic analog
+tag: ch4rf
+burst size: 10
+sensor port: 1
+adc select: external
+{garbage calibration}
+
+slot: 1
+type: generic analaog
+tag: ch4
+burst size: 10
+sensor port: 2
+adc select: external
+{garbage calibration}

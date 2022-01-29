@@ -13,12 +13,15 @@ library(dplyr)
 library(lubridate)
 library(ggplot2)
 library(ggpubr)
+library(stringr)
 
 #rm(list = ls()) #clear R working memory
 
 #note to self: ctrl+shift+c to comment toggle line(s)
 
-wd = getwd()
+#path to folder with main data folder in it
+wd = "/home/pleocavee/Desktop" 
+
 ex2_path = paste(wd,sep="","/methanejars/ex2")
 ex3_path = paste(wd,sep="","/methanejars/ex3")
 
@@ -43,15 +46,14 @@ merge_ex_csvs <- function(exDir){
    return(compiled_data)
 }
 
-#convert time.s epoch column to new posix date time, use that to create new hour and date columns
+#convert time.s to datetime column, split into hour and date, create a new hourly factor, change site and uuid to factors
 process_time <- function(compiled_data){
-   #create new date time column
    compiled_data$dtp<-lubridate::as_datetime(compiled_data$time.s)
-   
-   #create new columns for hour and date
    compiled_data$hour<-hour(compiled_data$dtp)
    compiled_data$date<-date(compiled_data$dtp)
-   # compiled_data$uHour <- compiled_data$date + compiled_data$hour
+   compiled_data$datehour<-as.factor(format.Date(compiled_data$dtp, format = "%Y-%m-%d %H"))
+   compiled_data$site<-as.factor(compiled_data$site)
+   compiled_data$uuid<-as.factor(compiled_data$uuid)
    
    return(compiled_data)
 }
@@ -69,12 +71,11 @@ ex2_data <- ggplot(data=ex2_df_dt)+geom_point(aes(x=dtp,y=ch4_raw,color=site))
 ex3_rf <- ggplot(data=ex3_df_dt)+geom_point(aes(x=dtp,y=ch4rf_raw,color=site))
 ex3_data <- ggplot(data=ex3_df_dt)+geom_point(aes(x=dtp,y=ch4_raw,color=site))
 
-# ex3_start <- min(ex3_df_dt$dtp)
-# ex3_end <- max(ex3_df_dt$dtp)
-# diff_hr = as.numeric(difftime(ex3_end,ex3_start), units="hours")
-# ex3_start_date <- ex3_df_dt$date[1]
-# ex3_start_hour <- ex3_df_dt$hour[1]
+ex3_jar3 <- ex3_df_dt %>% filter(site == "jar3")
+ex3_jar3_hourly <- ggplot(data=ex3_jar3)+geom_point(aes(x=dtp,y=ch4rf_raw), size=0)+facet_wrap(ex3_jar3$datehour)
+ex3_jar3_hourly
 
+#goal here was to try to serially create plots with unique names, then use that to plot a series of graphs by hours
 #this does not work, can't use variable for <-
 #can return a plot though
 # test <- function(dataSet,times,name){
@@ -104,8 +105,10 @@ ex3_hour_subset <- subset(ex3_df_dt,hour==18&date==as.Date("2022-01-21"))
 ex3_hour_rf <- ggplot(data=ex3_hour_subset)+geom_point(aes(x=dtp,y=ch4rf_raw,color=site))
 ex3_hour_data <- ggplot(data=ex3_hour_subset)+geom_point(aes(x=dtp,y=ch4_raw,color=site))
 
+#arrange basic and single hour graphs
 ex2Final <- ggarrange(ncol=2, nrow=2, labels=c("A","B","C","D"), ex2_rf, ex2_data, ex2_hour_rf, ex2_hour_data)
-ex2Final
+#ex2Final
 
 ex3Final <- ggarrange(ncol=2, nrow=2, labels=c("A","B","C","D"), ex3_rf, ex3_data, ex3_hour_rf, ex3_hour_data)
-ex3Final
+#ex3Final
+

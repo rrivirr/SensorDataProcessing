@@ -76,21 +76,39 @@ ex3_jar3 <- ex3_df_dt %>% filter(site == "jar3")
 ex3_jar3_hourly <- ggplot(data=ex3_jar3)+geom_point(aes(x=dtp,y=ch4rf_raw), size=0)+facet_wrap(ex3_jar3$datehour)
 ex3_jar3_hourly
 
+#code for identifying groups based on 15 minute interval
 
-
-ex3_df_dt$group <- cumsum(ifelse(difftime(ex3_df_dt$dtp,
-                                  shift(ex3_df_dt$dtp, fill = ex3_df_dt$dtp[1]), 
+ex3_df_dt_g<-data.frame()
+for(i in unique(ex3_df_dt$site)){
+	ex3_df_dt_0<-subset(ex3_df_dt,site==i)
+ex3_df_dt_0$group <- cumsum(ifelse(difftime(ex3_df_dt_0$dtp,
+                                  shift(ex3_df_dt_0$dtp, fill = ex3_df_dt_0$dtp[1]), 
                                   units = "mins") >= 15 
                          ,1, 0)) + 1
-						 
-ex3_df_dt
-
-ex3_df_dt$seq <- ave(ex3_df_dt$ch4rf_raw, ex3_df_dt$group, FUN = seq_along)
-
-ex3_df_dt_diff<-as.data.frame(ex3_df_dt %>% group_by(group) %>% mutate(min_time = min(dtp, na.rm = TRUE)))
+ex3_df_dt_0$seq <- ave(ex3_df_dt_0$ch4rf_raw, ex3_df_dt_0$group, FUN = seq_along)
+ex3_df_dt_diff<-as.data.frame(ex3_df_dt_0 %>% group_by(group) %>% mutate(min_time = min(dtp, na.rm = TRUE)))
 ex3_df_dt_diff$time_diff<-ex3_df_dt_diff$dtp-ex3_df_dt_diff$min_time
 
-ex3_df_dt_jar1<-subset(ex3_df_dt_diff,site=="jar0" & time_diff<40)
+		ex3_df_dt_g<-bind_rows(ex3_df_dt_g,ex3_df_dt_diff)
+}
+
+
+
+
+
+
+
+	
+ggplot(ex3_df_dt_g,aes(x=seq,y=ch4rf_raw))+
+geom_point(aes(color=group))+
+facet_wrap(.~site)
+
+	
+ggplot(ex3_df_dt_g,aes(x=seq,y=ch4rf_raw))+
+geom_point(aes(color=group))+
+facet_wrap(.~site)	
+
+ex3_df_dt_jar1<-subset(ex3_df_dt_g,site=="jar0")
 
 ggplot(ex3_df_dt_jar1,aes(x=seq,y=ch4rf_raw))+
 geom_point(aes(color=group))

@@ -5,7 +5,7 @@ library(ggpubr)
 library(stringr)
 library(gridExtra)
 
-# rm(list = ls()) #clear R working memory
+rm(list = ls()) #clear R working memory
 
 #note to self: ctrl+shift+c to comment toggle line(s)
 
@@ -33,7 +33,6 @@ merge_ex_csvs <- function(exDir){
         compiled_data<-bind_rows(compiled_data,data)
       }
     }
-    break
   }
   return(compiled_data)
 }
@@ -57,143 +56,163 @@ process_basic_plots <-function(compiled_data){
   return(plot_list)
 }
 
-# #process experiment 1 into data frame
-# ex1_df <- merge_ex_csvs(ex1_path)
-# ex1_df_dt <- process_time(ex1_df)
-# 
-# #data frame of unique deployments, can be accessed by df[x,1]
-# deployments = unique(ex1_df_dt['deployment'])
-# 
-# #manual subsets [4 deployed WaterBears]
-# ex1_df_dt_1 <- subset(ex1_df_dt, deployment==deployments[1,1])
-# ex1_df_dt_2 <- subset(ex1_df_dt, deployment==deployments[2,1])
-# ex1_df_dt_3 <- subset(ex1_df_dt, deployment==deployments[3,1])
-# ex1_df_dt_4 <- subset(ex1_df_dt, deployment==deployments[4,1])
-# 
-# #basic plots of all data [methane reference, methane, temperature, relative humidity]
-# ex1_ch4rf <- ggplot(data=ex1_df_dt)+geom_point(aes(x=dtp,y=ch4rf_raw,color=deployment))
-# ex1_ch4 <- ggplot(data=ex1_df_dt)+geom_point(aes(x=dtp,y=ch4_raw,color=deployment))
-# ex1_t <- ggplot(data=ex1_df_dt)+geom_point(aes(x=dtp,y=dht_C,color=deployment))
-# ex1_rh <- ggplot(data=ex1_df_dt)+geom_point(aes(x=dtp,y=dht_RH,color=deployment))
-# 
-# #basic plots by deployment
-# ex1_ch4rf_1 <-ggplot(data=ex1_df_dt_1)+geom_point(aes(x=dtp,y=ch4rf_raw))
-# ex1_ch4_1 <-ggplot(data=ex1_df_dt_1)+geom_point(aes(x=dtp,y=ch4_raw))
-# ex1_t_1 <-ggplot(data=ex1_df_dt_1)+geom_point(aes(x=dtp,y=dht_C))
-# ex1_rh_1 <-ggplot(data=ex1_df_dt_1)+geom_point(aes(x=dtp,y=dht_RH))
-# 
-# ex1_ch4rf_2 <-ggplot(data=ex1_df_dt_2)+geom_point(aes(x=dtp,y=ch4rf_raw))
-# ex1_ch4_2 <-ggplot(data=ex1_df_dt_2)+geom_point(aes(x=dtp,y=ch4_raw))
-# ex1_t_2 <-ggplot(data=ex1_df_dt_2)+geom_point(aes(x=dtp,y=dht_C))
-# ex1_rh_2 <-ggplot(data=ex1_df_dt_2)+geom_point(aes(x=dtp,y=dht_RH))
-# 
-# ex1_ch4rf_3 <-ggplot(data=ex1_df_dt_3)+geom_point(aes(x=dtp,y=ch4rf_raw))
-# ex1_ch4_3 <-ggplot(data=ex1_df_dt_3)+geom_point(aes(x=dtp,y=ch4_raw))
-# ex1_t_3 <-ggplot(data=ex1_df_dt_3)+geom_point(aes(x=dtp,y=dht_C))
-# ex1_rh_3 <-ggplot(data=ex1_df_dt_3)+geom_point(aes(x=dtp,y=dht_RH))
-# 
-# ex1_ch4rf_4 <-ggplot(data=ex1_df_dt_4)+geom_point(aes(x=dtp,y=ch4rf_raw))
-# ex1_ch4_4 <-ggplot(data=ex1_df_dt_4)+geom_point(aes(x=dtp,y=ch4_raw))
-# ex1_t_4 <-ggplot(data=ex1_df_dt_4)+geom_point(aes(x=dtp,y=dht_C))
-# ex1_rh_4 <-ggplot(data=ex1_df_dt_4)+geom_point(aes(x=dtp,y=dht_RH))
+#process experiment 1 into data frame
+ex1_df <- merge_ex_csvs(ex1_path)
+ex1_df_dt <- process_time(ex1_df)
 
-# method to plot ch4rf_raw for each deployment as individual elements in a list
-ls = list()
-for (x in 1:length(deployments[,1])){
-  ls[[x]] = ggplot(data=subset(ex1_df_dt, deployment==deployments[x,1]))+geom_point(aes(x=dtp,y=ch4rf_raw))
+#data frame of unique deployments, can be accessed by df[x,1]
+WaterBear = unique(ex1_df_dt['deployment'])
+  #note, might want to rename deployment names to be easier to read
+WaterBear_L = length(WaterBear[,1])
+commonName = list()
+for(i in 1:WaterBear_L){
+  commonName[i] = paste("WaterBear-",i,sep="")
 }
-print(ls[[4]])
+commonName = unlist(commonName)
 
 #hardcode columns to plot
 col = c('battery.V','ch4rf_raw','ch4_raw','dht_C','dht_RH')
 ylabs = c('Battery Voltage', 'Methane Reference Voltage', 'Methane Voltage', 'Temperature (C)', 'Relative Humidity (%)')
   # this will work once we have calibrated values to also plot
   # col = names(ex1_df_dt)[7:13]
-a = list()
-b = list()
-ls = list(list())
-for(i in 1:length(col)){
+
+
+#initialize list of lists to hold plots based on deployment count and col count
+col_L = length(col)
+ls = vector('list', col_L)
+
+##double index method (hard for a user to interact with)
+# for(i in 1:WaterBear_L){
+#   ls[[i]] = vector('list', WaterBear_L)
+# }
+# 
+# for(i in 1:col_L){
+#   if(i == 1){
+#     for(j in 1:WaterBear_L){
+#       ls[[i]][[j]] = ggplot(data=subset(ex1_df_dt, deployment==WaterBear[j,1]))+
+#         geom_point(aes_string(x="dtp",y=col[i]))+
+#         ylab(ylabs[i])+
+#         xlab("Date")+
+#         ggtitle(paste("WaterBear-",j,sep=""))
+#       # ggtitle(WaterBear[j,1])
+#     }
+#   } else if (i == 2) {
+#     for(j in 1:WaterBear_L){
+#       ls[[i]][[j]] = ggplot(data=subset(ex1_df_dt, deployment==WaterBear[j,1]))+
+#         geom_point(aes_string(x="dtp",y=col[i]))+
+#         ylab(ylabs[i])+
+#         xlab("Date")+
+#         ggtitle(paste("WaterBear-",j,sep=""))
+#       # ggtitle(WaterBear[j,1])
+#     }
+#   } else if (i == 3){
+#     for(j in 1:WaterBear_L){
+#       ls[[i]][[j]] = ggplot(data=subset(ex1_df_dt, deployment==WaterBear[j,1]))+
+#         geom_point(aes_string(x="dtp",y=col[i]))+
+#         ylab(ylabs[i])+
+#         xlab("Date")+
+#         ggtitle(paste("WaterBear-",j,sep=""))
+#       # ggtitle(WaterBear[j,1])
+#     }
+#   } else {
+#     for(j in 1:WaterBear_L){
+#       ls[[i]][[j]] = ggplot(data=subset(ex1_df_dt, deployment==WaterBear[j,1]))+
+#         geom_point(aes_string(x="dtp",y=col[i]))+
+#         ylab(ylabs[i])+
+#         xlab("Date")+
+#         ggtitle(paste("WaterBear-",j,sep=""))
+#       # ggtitle(WaterBear[j,1])
+#     }
+#   }
+# }
+
+##list of lists, but the lists are the names of the columns and common names for the deployments
+ex1_plots = vector('list', col_L)
+names(ex1_plots) = col
+#initialize empty double list to hold plots
+for(i in 1:WaterBear_L+1){
+  ex1_plots[[ col[i] ]] = vector('list', WaterBear_L)
+  names( ex1_plots[[ col[i] ]] ) = commonName
+}
+
+for(i in 1:col_L){
   if(i == 1){
-    for(j in 1:length(deployments[,1])){
-      # print(j)
-      test =subset(ex1_df_dt, deployment==deployments[j,1])
-      ls[[i]][[j]] = ggplot(data=test)+
+    for(j in 1:WaterBear_L){
+      ex1_plots[[col[i]]][[commonName[j]]] = ggplot(data=subset(ex1_df_dt, deployment==WaterBear[j,1]))+
         geom_point(aes_string(x="dtp",y=col[i]))+
         ylab(ylabs[i])+
         xlab("Date")+
-        ggtitle(deployments[j,1])
+        ggtitle(commonName[j])
+        # ggtitle(paste("WaterBear-",j,sep=""))
+        # ggtitle(WaterBear[j,1])
     }
   } else if (i == 2) {
-    print(i)
-    for(j in 1:length(deployments[,1])){
-      print(j)
-      test =subset(ex1_df_dt, deployment==deployments[j,1])
-      ls[[i]][[j]] = ggplot(data=test)+
+    for(j in 1:WaterBear_L){
+      ex1_plots[[col[i]]][[commonName[j]]] = ggplot(data=subset(ex1_df_dt, deployment==WaterBear[j,1]))+
         geom_point(aes_string(x="dtp",y=col[i]))+
         ylab(ylabs[i])+
         xlab("Date")+
-        ggtitle(deployments[j,1])
+        ggtitle(commonName[j])
+        # ggtitle(paste("WaterBear-",j,sep=""))
+        # ggtitle(WaterBear[j,1])
     }
   } else if (i == 3){
-    
+    for(j in 1:WaterBear_L){
+      ex1_plots[[col[i]]][[commonName[j]]] = ggplot(data=subset(ex1_df_dt, deployment==WaterBear[j,1]))+
+        geom_point(aes_string(x="dtp",y=col[i]))+
+        ylab(ylabs[i])+
+        xlab("Date")+
+        ggtitle(commonName[j])
+        # ggtitle(paste("WaterBear-",j,sep=""))
+        # ggtitle(WaterBear[j,1])
+    }
   } else {
-    
+    for(j in 1:WaterBear_L){
+      ex1_plots[[col[i]]][[commonName[j]]] = ggplot(data=subset(ex1_df_dt, deployment==WaterBear[j,1]))+
+        geom_point(aes_string(x="dtp",y=col[i]))+
+        ylab(ylabs[i])+
+        xlab("Date")+
+        ggtitle(commonName[j])
+        # ggtitle(paste("WaterBear-",j,sep=""))
+        # ggtitle(WaterBear[j,1])
+    }
   }
 }
 
-# as.formula
-print(ls[[1]][[2]])
-#ideally create basic plots into table with deployment as index, columns are values being plotted
-#so [1,'ch4rf_raw'] would store the plot for deployment 1's raw methane values
+# view plots by groups:
+# print(ex1_plots['battery.V'])
+print(ex1_plots[1]) # 'battery.V'
+print(ex1_plots[2]) # 'ch4rf_raw'
+print(ex1_plots[3]) # 'ch4_raw'
+print(ex1_plots[4]) # 'dht_C'
+print(ex1_plots[5]) # 'dht_RH'
 
 #output goal: save each deployment to its own page?
 # save all combined plots to one page?
 
-# # Plot all relationships
-# ggplotRegression <- function (fit) {
-#   ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) +
-#     geom_point() +
-#     stat_smooth(method = "lm", col = "red") +
-#     labs(title = paste("Adj R2 = ",signif(summary(fit)$adj.r.squared, 5),
-#                        " P =",signif(summary(fit)$coef[2,4], 5))) +
-#     theme_classic(base_size = 16)
+#open PDF
+# pdf(file=ex1_dest, onefile=TRUE)
+# 
+# #specify to save plots in 2x2 grid
+# par(mfrow = c(2,2))
+# 
+# #save plots to PDF
+# for (i in seq(length(ls))) {
+#   do.call("grid.arrange", ls[i])  
 # }
 # 
-# for (i in colnames(combined_dataset_log[,c(11:21)])) {
-#   formula <- as.formula(paste(i, " ~ invaded_percentCover"))
-#   fit1 <- lm(formula, data = combined_dataset_log)
-#   print(ggplotRegression(fit1))
-# }
-
-# list1 and list2 are uni-dimensional lists
-list1 <- list (c(1:5), "hi", 0 + 5i)
-list2 <- list(c(6:8))
-
-# create a list_data with two lists as its elements
-list_data <- list(list1, list2)
-
-# runs uptil the length of outer list
-for (i in c(1 : length(list_data)))
-{
-  # runs uptil the length of inner lists at ith indices
-  for (j in c(1: length(list_data[[i]])))
-  { 
-    cat ("List", i, "element", j, ": ")
-    print (list_data[[i]][[j]])
-  }
-}
+# #turn off PDF plotting
+# dev.off()
 
 
-#open PDF
-pdf(file=ex1_dest, onefile=TRUE)
 
-#specify to save plots in 2x2 grid
-par(mfrow = c(2,2))
 
-#save plots to PDF
-for (i in seq(length(ls))) {
-  do.call("grid.arrange", ls[i])  
-}
 
-#turn off PDF plotting
-dev.off()
+
+
+
+
+
+
+
+

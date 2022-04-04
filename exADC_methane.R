@@ -54,6 +54,7 @@ process_time <- function(compiled_data){
    compiled_data$datehour<-as.factor(format.Date(compiled_data$dtp, format = "%Y-%m-%d %H"))
    compiled_data$site<-as.factor(compiled_data$site)
    compiled_data$uuid<-as.factor(compiled_data$uuid)
+   compiled_data$deployment<-as.factor(compiled_data$deployment)
    
    return(compiled_data)
 }

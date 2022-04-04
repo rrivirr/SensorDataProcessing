@@ -1,3 +1,14 @@
+# exADC_CH4DHT22.R created Apr4, 2022 by Ken Chong
+# Code to process WaterBear sonde data containing one NGM2611-E13 methane sensor, and one DHT22 temperature and humidity sensor
+# Produces individual plots for specified columns vs time per deployed WaterBear
+# Produces conglomerate aggregate plots for specified columns vs time for the entire experiment
+# 
+# Additional goals:
+# Aggregate and average by burst size, then create hourly plots
+# Arrange and add plots to output pdf
+# Create metadata file with summary statistics
+
+### Required Packages ###
 library(dplyr)
 library(lubridate)
 library(ggplot2)
@@ -5,19 +16,24 @@ library(ggpubr)
 library(stringr)
 library(gridExtra)
 
-rm(list = ls()) #clear R working memory
-# dev.off() # clear plots
-
 # note to self: ctrl+shift+c to comment toggle line(s)
 
+### garbage collection lines ###
+rm(list = ls()) # clear R working memory
+graphics.off() # close any open plots
+
+### SETTINGS ###
 # path to folder with main data folder in it
 wd = "/home/pleocavee/Desktop" 
 
-# path fo folder with experiment data in it
+# path of folder with experiment data in it
 ex1_path = paste(wd,sep="","/4xCH4DHT22_20220401")
 
-# destination folder and name of file to create for plot outpus
+# destination folder and name of file to create for plot output
 ex1_dest = paste(ex1_path,sep="","/4xCH4DHT22_20220401_plots.pdf")
+
+# destination folder and name of file to create for metadata
+ex1_metadata_path = paste(ex1_path,"/4xCH4DHT22_20220401_METADATA.txt",sep="")
 
 # hardcode columns to plot and corresponding y-axis labels
 col = c('battery.V','ch4rf_raw','ch4_raw','dht_C','dht_RH')
@@ -140,24 +156,6 @@ plot_Deployment_v_Time <-function(df){
   return(DvT)
 }
 
-#process experiment 1 into data frame
-ex1_df <- merge_ex_csvs(ex1_path)
-ex1_df_dt <- process_time(ex1_df)
-
-# #data frame of unique deployments, can be accessed by df[x,1]
-# WaterBear = unique(ex1_df_dt['deployment'])
-#   #note, might want to rename deployment names to be easier to read or add a WB-datalogger setting for user assigned name -> metadata file rather than every row?
-# WaterBear_L = length(WaterBear[,1])
-# 
-# #create custom names for deployments
-# commonName = list()
-# for(i in 1:WaterBear_L){
-#   commonName[i] = paste("WaterBear-",i,sep="")
-# }
-# commonName = unlist(commonName) # list into character vector
-
-
-
 createNamesTable <-function(df){
   #currently just serially creates names following the format of "WaterBear-X" with X ranging 1 to the number of unique deployments in the data
   unqDeploy = unique(df['deployment'])
@@ -167,29 +165,21 @@ createNamesTable <-function(df){
   return(unqDeploy)
 }
 
+#process experiment 1 into data frame
+ex1_df <- merge_ex_csvs(ex1_path)
+ex1_df_dt <- process_time(ex1_df)
+
 ex1_lookupTable <- createNamesTable(ex1_df_dt)
 ex1_df_dt$cName <- ex1_lookupTable$cName[match(ex1_df_dt$deployment, ex1_lookupTable$deployment)]
 
-# commonName = as.character(unlist(unqDeploy['cName']))
-# unqDeploy_L = length(commonName)
-
-# createLookupTable <- function(){
-#   
-# }
-
-# #create lookup table to process df
-# for(i in 1:WaterBear_L){
-#   WaterBear$commonName[i] = paste("WaterBear-",i,sep="")
-# }
-# # add new column based on commonName
-# ex1_df_dt$cName <- WaterBear$commonName[match(ex1_df_dt$deployment, WaterBear$deployment)]
-
 ex1_individual_plots <- plot_Y_v_Time(ex1_df_dt)
-ex1_individual_plots
+# ex1_individual_plots # open plots in viewer
 
 ex1_deployment_plots <- plot_Deployment_v_Time(ex1_df_dt)
-ex1_deployment_plots
+# ex1_deployment_plots # open plots in viewer
 
+
+### write plots to pdf ###
 #open PDF
 # pdf(file=ex1_dest, onefile=TRUE)
 # 
@@ -204,93 +194,14 @@ ex1_deployment_plots
 # #turn off PDF plotting
 # dev.off()
 
-# ##list of lists, where list values are the names of the columns and common names for the deployments
-# ex1_subset_plots = vector('list', col_L)
-# names(ex1_subset_plots) = col
-# #initialize empty double list to hold plots
-# for(i in 1:WaterBear_L+1){
-#   ex1_subset_plots[[ col[i] ]] = vector('list', WaterBear_L)
-#   names( ex1_subset_plots[[ col[i] ]] ) = commonName
-# }
-# 
-# for(i in 1:col_L){
-#   print(col[i])
-#   if(i == 1){
-#     for(j in 1:WaterBear_L){
-#       print(commonName[j])
-#       ex1_subset_plots[[ col[i] ]][[ commonName[j] ]] = ggplot(data=subset(ex1_df_dt, cName==commonName[j]))+
-#         geom_point(aes_string(x="dtp",y=col[i]))+
-#         ylab(ylabs[i])+xlab("Date")+ggtitle(commonName[j])
-#     }
-#   } else if (i == 2) {
-#     for(j in 1:WaterBear_L){
-#       print(commonName[j])
-#       ex1_subset_plots[[ col[i] ]][[ commonName[j] ]] = ggplot(data=subset(ex1_df_dt, cName==commonName[j]))+
-#         geom_point(aes_string(x="dtp",y=col[i]))+
-#         ylab(ylabs[i])+xlab("Date")+ggtitle(commonName[j])
-#     }
-#   } else if (i == 3){
-#     for(j in 1:WaterBear_L){
-#       print(commonName[j])
-#       ex1_subset_plots[[ col[i] ]][[ commonName[j] ]] = ggplot(data=subset(ex1_df_dt, cName==commonName[j]))+
-#         geom_point(aes_string(x="dtp",y=col[i]))+
-#         ylab(ylabs[i])+xlab("Date")+ggtitle(commonName[j])
-#     }
-#   } else {
-#     for(j in 1:WaterBear_L){
-#       print(commonName[j])
-#       ex1_subset_plots[[ col[i] ]][[ commonName[j] ]] = ggplot(data=subset(ex1_df_dt, cName==commonName[j]))+
-#         geom_point(aes_string(x="dtp",y=col[i]))+
-#         ylab(ylabs[i])+xlab("Date")+ggtitle(commonName[j])
-#     }
-#   }
-# }
-
-# view plots by groups:
-# ex1_plots['battery.V']
-# ex1_subset_plots[1] # 'battery.V'
-# ex1_subset_plots[2] # 'ch4rf_raw'
-# ex1_subset_plots[3] # 'ch4_raw'
-# ex1_subset_plots[4] # 'dht_C'
-# ex1_subset_plots[5] # 'dht_RH'
-
-#output goal: save each deployment to its own page?
-# save all combined plots to one page?
 
 
-# ##list to hold plots
-# ex1_plots = vector('list', col_L)
-# names(ex1_plots) = col
-# 
-# # plot each column vs time with all deployments
-# for(i in 1:col_L){
-#   if(col[i] == 'battery.V'){
-#     ex1_plots[[i]] = ggplot(data=ex1_df_dt)+
-#       geom_point(aes_string(x="dtp",y=col[i],color="commonName"))+
-#       ylab(ylabs[i])+xlab("Date")+scale_color_discrete(name="Deployment")
-#   } else if(col[i] == 'ch4rf_raw'){
-#     ex1_plots[[i]] = ggplot(data=ex1_df_dt)+
-#       geom_point(aes_string(x="dtp",y=col[i],color="commonName"))+
-#       ylab(ylabs[i])+xlab("Date")+scale_color_discrete(name="Deployment")
-#   } else if(col[i] == 'ch4_raw'){
-#     ex1_plots[[i]] = ggplot(data=ex1_df_dt)+
-#       geom_point(aes_string(x="dtp",y=col[i],color="commonName"))+
-#       ylab(ylabs[i])+xlab("Date")+scale_color_discrete(name="Deployment")
-#   } else if(col[i] == 'dht_C'){
-#     ex1_plots[[i]] = ggplot(data=ex1_df_dt)+
-#       geom_point(aes_string(x="dtp",y=col[i],color="commonName"))+
-#       ylab(ylabs[i])+xlab("Date")+scale_color_discrete(name="Deployment")
-#   } else if(col[i] == 'dht_RH'){
-#     ex1_plots[[i]] = ggplot(data=ex1_df_dt)+
-#       geom_point(aes_string(x="dtp",y=col[i],color="commonName"))+
-#       ylab(ylabs[i])+xlab("Date")+scale_color_discrete(name="Deployment")
-#   } else {} # just in case, or for expanding later
-# }
+#### write metadata file ###
+# fileConn<-file(ex1_metadata_path)
+# writeLines(c("Hello","World"), fileConn)
+# close(fileConn)
 
 
-#display plots
-# ex1_plots[4]
-# ex1_plots
 
 
 

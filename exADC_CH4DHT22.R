@@ -123,56 +123,6 @@ plot_Y_v_Time <-function(df){
   return(YvT)
 }
 
-# scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
-#   scale_y_continuous(breaks = scales::pretty_breaks(n = 10))
-
-## extended version for customization ##
-# plot_Y_v_Time <-function(df){
-#   ##list of lists, where list values are the names of the columns and common names for the deployments
-#   YvT = vector('list', col_L)
-#   names(YvT) = column
-#   
-#   commonName = as.character(unlist(unique(df['cName'])))
-#   unqDeploy_L = length(commonName)
-#   
-#   #initialize empty double list to hold plots
-#   for(i in 1:col_L){
-#     YvT[[ column[i] ]] = vector('list', unqDeploy_L)
-#     names( YvT[[ column[i] ]] ) = commonName
-#   }
-#   
-#   # grouped to make individual processing easier, but maybe not necessary depending on whether further customization is done or not
-#   # customization could also probably be done with a list as well?
-#   for(i in 1:col_L){
-#     if(i == 1){
-#       for(j in 1:unqDeploy_L){
-#         YvT[[ column[i] ]][[ commonName[j] ]] = ggplot(data=subset(df, cName==commonName[j]))+
-#           geom_point(aes_string(x="dtp",y=column[i]))+
-#           ylab(ylabs[i])+xlab("Date")+ggtitle(commonName[j])
-#       }
-#     } else if (i == 2) {
-#       for(j in 1:unqDeploy_L){
-#         YvT[[ column[i] ]][[ commonName[j] ]] = ggplot(data=subset(df, cName==commonName[j]))+
-#           geom_point(aes_string(x="dtp",y=column[i]))+
-#           ylab(ylabs[i])+xlab("Date")+ggtitle(commonName[j])
-#       }
-#     } else if (i == 3){
-#       for(j in 1:unqDeploy_L){
-#         YvT[[ column[i] ]][[ commonName[j] ]] = ggplot(data=subset(df, cName==commonName[j]))+
-#           geom_point(aes_string(x="dtp",y=column[i]))+
-#           ylab(ylabs[i])+xlab("Date")+ggtitle(commonName[j])
-#       }
-#     } else {
-#       for(j in 1:unqDeploy_L){
-#         YvT[[ column[i] ]][[ commonName[j] ]] = ggplot(data=subset(df, cName==commonName[j]))+
-#           geom_point(aes_string(x="dtp",y=column[i]))+
-#           ylab(ylabs[i])+xlab("Date")+ggtitle(commonName[j])
-#       }
-#     }
-#   }
-#   return(YvT)
-# }
-
 #### generate deployment vs time plots ####
 ## basic version ##
 plot_Deployment_v_Time <-function(df){
@@ -188,39 +138,6 @@ plot_Deployment_v_Time <-function(df){
   }
   return(DvT)
 }
-
-## extended version for customization ##
-# plot_Deployment_v_Time <-function(df){
-#   # initialize list to hold plots
-#   DvT = vector('list', col_L)
-#   names(DvT) = column
-#   
-#   # plot each column vs time with all deployments into list
-#   for(i in 1:col_L){
-#     if(column[i] == 'battery.V'){
-#       DvT[[i]] = ggplot(data=df)+
-#         geom_point(aes_string(x="dtp",y=column[i],color="cName"))+theme_classic()+
-#         ylab(ylabs[i])+xlab("Date")+scale_x_datetime(date_labels="%m-%d %H",date_breaks="10 hours")+scale_color_discrete(name="Deployment")
-#     } else if(column[i] == 'ch4rf_raw'){
-#       DvT[[i]] = ggplot(data=df)+
-#         geom_point(aes_string(x="dtp",y=column[i],color="cName"))+theme_classic()+
-#         ylab(ylabs[i])+xlab("Date")+scale_x_datetime(date_labels="%m-%d %H",date_breaks="10 hours")+scale_color_discrete(name="Deployment")
-#     } else if(column[i] == 'ch4_raw'){
-#       DvT[[i]] = ggplot(data=df)+
-#         geom_point(aes_string(x="dtp",y=column[i],color="cName"))+theme_classic()+
-#         ylab(ylabs[i])+xlab("Date")+scale_x_datetime(date_labels="%m-%d %H",date_breaks="10 hours")+scale_color_discrete(name="Deployment")
-#     } else if(column[i] == 'dht_C'){
-#       DvT[[i]] = ggplot(data=df)+
-#         geom_point(aes_string(x="dtp",y=column[i],color="cName"))+theme_classic()+
-#         ylab(ylabs[i])+xlab("Date")+scale_x_datetime(date_labels="%m-%d %H",date_breaks="10 hours")+scale_color_discrete(name="Deployment")
-#     } else if(column[i] == 'dht_RH'){
-#       DvT[[i]] = ggplot(data=df)+
-#         geom_point(aes_string(x="dtp",y=column[i],color="cName"))+theme_classic()+
-#         ylab(ylabs[i])+xlab("Date")+scale_x_datetime(date_labels="%m-%d %H",date_breaks="10 hours")+scale_color_discrete(name="Deployment")
-#     } else {} # just in case, or for expanding later
-#   }
-#   return(DvT)
-# }
 
 createNamesTable <- function(df){
   #currently just serially creates names following the format of "WaterBear-X" with X ranging 1 to the number of unique deployments in the data
@@ -245,6 +162,7 @@ ex2_lookupTable <- createNamesTable(ex2_df_dt)
 ex2_df_dt$cName <- ex2_lookupTable$cName[match(ex2_df_dt$deployment, ex2_lookupTable$deployment)]
 ex2_df_dt$cName <- as.factor(ex2_df_dt$cName)
 
+
 ### plot work ###
 
 #experiment 1 plots
@@ -256,6 +174,7 @@ ex1_deployment_plots <- plot_Deployment_v_Time(ex1_df_dt)
 ex2_individual_plots <- plot_Y_v_Time(ex2_df_dt)
 ex2_deployment_plots <- plot_Deployment_v_Time(ex2_df_dt)
 # ex2_deployment_grid <- ggarrange(plotlist=ex2_deployment_plots, ncol=2, nrow=3, common.legend=TRUE)
+
 
 ### meta data work ###
 
@@ -301,7 +220,6 @@ writePDF <- function(ex_ip, ex_dp, path){
 
 writePDF(ex1_individual_plots,ex1_deployment_plots, ex1_dest)
 writePDF(ex2_individual_plots,ex2_deployment_plots, ex2_dest)
-print("done running file\n")
 
 ##### i need a function that checks time stamp intervals based on settings #####
 # interval 60 min

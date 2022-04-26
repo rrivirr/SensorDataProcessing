@@ -1,23 +1,24 @@
 # exADC_CH4DHT22.R created Apr 4, 2022 by Ken Chong
-# Last edit: Apr 12, 2022 by Ken Chong
+# Last edit: Apr 25, 2022 by Ken Chong
 #
 # Code to process WaterBear sonde data containing output from one Figaro NGM2611-E13 methane sensor, and one Adafruit DHT22 temperature and humidity sensor
 # Produces individual plots for specified columns vs time per deployed WaterBear
 # Produces aggregate plots for specified columns vs time for the entire experiment
+# Produces aggregate plots for specified columns vs three clips for the entire experiment
 # 
 # Additional goals:
 # Aggregate and average by burst size, then create hourly plots
 # Arrange and add plots to output pdf
-# Create metadata file with summary statistics
 # Create system to flag potentially erroneous data for inspection
 # Backup produced files or original data (or separate bash script)?
 #
 # Thoughts and considerations:
 # Should this script take user input? For values that are hardcoded currently
 #   Depends on how often script will have to be run
-# install.packages('NCmisc')
-
+#
 # note to self: ctrl+shift+c to comment toggle line(s)
+
+# install.packages('NCmisc')
 # install.packages('tidyverse')
 
 ### Required Packages ###

@@ -26,6 +26,7 @@ library(dplyr) # bind, relocate
 library(lubridate) # as_datetime, hour, date
 library(ggplot2) # plotting package
 library(ggpubr) # ggarrange
+library(grid) # textGrob
 # library(tidyverse) # 
 # library(data.table) # melt
 # library(stringr) #not used currently
@@ -45,6 +46,10 @@ options('digits'=15) # default is 7, increasing to show full precision of number
 ### R SCRIPT SETTINGS ###
 # path to folder with main data folder in it
 wd = "~/Desktop" #linux path
+
+# custom color palettes: #
+custom_colors=c('#AD4CFB','#E6D500','#D81B60','#05CACA')
+custom_colors2=c('#7000CC','#E22C7B','#FFAF2A','#00CACA')
 
 # USER INPUT - BASE EXPERIMENT FOLDER NAME #
 ex1_folder = "4xCH4DHT22_20220401"
@@ -72,6 +77,7 @@ ex3_metadata_dest = paste(sep="",ex3_output_dir,ex3_folder,"_METADATA.txt")
 ex1_qc_dest = paste(sep="",ex1_output_dir,ex1_folder,"_QC.txt")
 ex2_qc_dest = paste(sep="",ex2_output_dir,ex2_folder,"_QC.txt")
 ex3_qc_dest = paste(sep="",ex3_output_dir,ex3_folder,"_QC.txt")
+
 
 ### USER INPUT - EXPERIMENT SETTINGS ###
 # assuming same settings for all currently #
@@ -182,7 +188,7 @@ plot_Y_v_Time <-function(df){
     for(j in 1:unqDeploy_L){
       YvT[[ column[i] ]][[ commonName[j] ]] = ggplot(data=subset(df, cName==commonName[j]))+
         geom_point(aes_string(x="dtp",y=column[i]),size=1)+theme_classic(base_size=12)+
-        ylab(ylabs[i])+xlab("Date (M-D Hr)")+ggtitle(commonName[j])+scale_x_datetime(date_labels="%m-%d %H",breaks=scales::pretty_breaks(n=4))
+        ylab(ylabs[i])+xlab("Date")+ggtitle(commonName[j])+scale_x_datetime(date_labels="%m/%d %H:%M",breaks=scales::pretty_breaks(n=3))
     }
   }
   return(YvT)
@@ -199,7 +205,8 @@ plot_Sonde_v_Time <-function(df){
   for ( i in 1:col_L ){
     DvT[[i]] = ggplot(data=df)+
       geom_point(aes_string(x="dtp",y=column[i],color="cName"),size=1)+theme_classic(base_size=12)+
-      ylab(ylabs[i])+xlab("Date (M-D Hr)")+scale_x_datetime(date_labels="%m-%d %H",date_breaks="10 hours")+scale_color_discrete(name="Sonde")
+      ylab(ylabs[i])+xlab("Date")+scale_x_datetime(date_labels="%m/%d %H:%M",breaks=scales::pretty_breaks(n=3))+scale_color_discrete(name="Sonde")
+      # ylab(ylabs[i])+xlab("Date (M/D Hr)")+scale_x_datetime(date_labels="%m/%d %H",date_breaks="10 hours")+scale_color_discrete(name="Sonde")
   }
   return(DvT)
 }
@@ -243,13 +250,18 @@ writeQC <- function(df, path){
   qcSummary <- data.frame(row.names=sondes)
   qcStep <- c('NaN','grossError')
   for(step in qcStep){
+    # print(step)
     for(wb in sondes){
+      # print(wb)
       for(col in colMetrics){
+        # print(col)
+        print(df$cName)
         wbSubset <- df[ which(df$cName == wb),]
+        # print(wbSubset)
         name <- paste(sep=".",col,step)
         qcSummary[wb,name] <- sum(is.nan(wbSubset[,col]))
       }
-    }
+    }-
     if(step == qcStep[1]){
       df <- grossErrors(df) # process gross errors in dataframe #
     }
@@ -262,6 +274,8 @@ writeQC <- function(df, path){
   write.table(qcSummary, file=path, row.names=FALSE, sep="\t")
   return(df)
 }
+
+ex1_df_dt_QC <- writeQC(ex1_df_dt, ex1_qc_dest)
 
 #calculate statistics for one column of data
 calculateMetrics <- function(x){
@@ -344,7 +358,7 @@ resample_df_list <- function(df_list){
 
 # output a list of ggarranged plots for each colMetrics, in this case 5 (not including time.s in position 1)
 # intermediary x plots for each resampled hour, in this case 3
-ggarr_resample_df_list <- function(df_list){
+plot_arr_df_list <- function(df_list){
   # initialize list of lists to hold intermediary plots, 1 plot per resampled hour, per colMetrics
   hours = names(df_list)
   valuePlots <- vector('list', col_L)
@@ -359,17 +373,29 @@ ggarr_resample_df_list <- function(df_list){
   names(ggarrPlots) = column
   
   for(i in 1:col_L){
+    # based on number of clips = 3
+    yMax=max( df_list[[ hours[1] ]][ column[i] ], df_list[[ hours[2] ]][ column[i] ], df_list[[ hours[3] ]][ column[i] ] )
+    yMin=min( df_list[[ hours[1] ]][ column[i] ], df_list[[ hours[2] ]][ column[i] ], df_list[[ hours[3] ]][ column[i] ] )
     for(hr in hours){
       df <- data.frame( df_list[[ hr ]] )
       df$dtp <- as.POSIXct(df$sec, tz='gmt', origin='1970-01-01 00:00:00')
       
-      valuePlots[[ column[i] ]][[ hr ]] <- ggplot(data=df[ which(df$cName != 'WaterBear-3') ,], aes_string(x='dtp', color='cName', y=column[i]) )+
-        geom_point()+geom_line()+theme_classic(base_size = 12)+labs(x="Time (GMT)", y=ylabs[i], color='Sonde')+scale_color_discrete(na.translate=F)
+      valuePlots[[ column[i] ]][[ hr ]] <- ggplot(data=df, aes_string(x='dtp', color='cName', y=column[i]))+
+        geom_point(size=2)+geom_line(size=1)+theme_classic(base_size = 14)+labs(x=NULL, y=NULL, color=NULL)+
+        scale_color_manual(values=custom_colors2,na.translate=F)+
+        scale_x_datetime(date_labels="%H:%M",breaks=scales::pretty_breaks(n=5),expand=c(0,30))+
+        ylim(yMin,yMax)
     }
-    ggarrPlots[[ column[i] ]] <- ggarrange(plotlist=valuePlots[[ column[i] ]], labels=c('A','B','C'), common.legend=TRUE)
+    ##### note to self: ggarrange all of the plots together, annotate each row / shared y axis for each row
+    ggarrPlots[[ column[i] ]] <- ggarrange(ncol=3, plotlist=valuePlots[[ column[i] ]], common.legend=TRUE, align='hv', labels=c('A','B','C'), hjust=-1) #
+    ggarrPlots[[ column[i] ]] <- annotate_figure( ggarrPlots[[ column[i] ]], 
+                                                  left=textGrob(ylabs[i], rot=90, vjust=0.5, gp=gpar(fontsize=14)), 
+                                                  bottom=textGrob('Time', vjust=-0.25, gp=gpar(fontsize=14)))
   }
   return(ggarrPlots)
 }
+
+# ex3_resample_ggarr <- plot_arr_df_list(ex3_resample_df_list)
 
 ### Process experiment data
 #process experiment 1
@@ -403,10 +429,15 @@ writeMetrics(ex1_df_dt_QC, ex1_metadata_dest)
 writeMetrics(ex2_df_dt_QC, ex2_metadata_dest)
 writeMetrics(ex3_df_dt_QC, ex3_metadata_dest)
 
+##### Manual SUBSET DFs to remove WaterBear-3 for erroneous data #####
+ex1_df_dt_QC_subset <- ex1_df_dt_QC[ which(ex1_df_dt_QC$cName != 'WaterBear-3') ,]
+ex2_df_dt_QC_subset <- ex2_df_dt_QC[ which(ex2_df_dt_QC$cName != 'WaterBear-3') ,]
+ex3_df_dt_QC_subset <- ex3_df_dt_QC[ which(ex3_df_dt_QC$cName != 'WaterBear-3') ,]
+  
 ### clip three 20 minute bursts from the start, middle, and end of each dataset ###
-ex1_clip_df_list <- clipData(ex1_df_dt_QC)
-ex2_clip_df_list <- clipData(ex2_df_dt_QC)
-ex3_clip_df_list <- clipData(ex3_df_dt_QC)
+ex1_clip_df_list <- clipData(ex1_df_dt_QC_subset)
+ex2_clip_df_list <- clipData(ex2_df_dt_QC_subset)
+ex3_clip_df_list <- clipData(ex3_df_dt_QC_subset)
 
 ### resample each dataframe clip based on 10 readings / second ###
 ex1_resample_df_list <- resample_df_list(ex1_clip_df_list)
@@ -418,17 +449,20 @@ ex3_resample_df_list <- resample_df_list(ex3_clip_df_list)
 #experiment 1 plot lists
 ex1_individual_plots <- plot_Y_v_Time(ex1_df_dt_QC)
 ex1_deployment_plots <- plot_Sonde_v_Time(ex1_df_dt_QC)
-ex1_ggarr_resampled <- ggarr_resample_df_list(ex1_resample_df_list)
+ex1_clip_ggarr <- plot_arr_df_list(ex1_clip_df_list)
+ex1_resample_ggarr <- plot_arr_df_list(ex1_resample_df_list)
 
 #experiment 2 plot lists
 ex2_individual_plots <- plot_Y_v_Time(ex2_df_dt_QC)
 ex2_deployment_plots <- plot_Sonde_v_Time(ex2_df_dt_QC)
-ex2_ggarr_resampled <- ggarr_resample_df_list(ex2_resample_df_list)
+ex2_clip_ggarr <- plot_arr_df_list(ex2_clip_df_list)
+ex2_resample_ggarr <- plot_arr_df_list(ex2_resample_df_list)
 
 #experiment 3 plot lists
 ex3_individual_plots <- plot_Y_v_Time(ex3_df_dt_QC)
 ex3_deployment_plots <- plot_Sonde_v_Time(ex3_df_dt_QC)
-ex3_ggarr_resampled <- ggarr_resample_df_list(ex3_resample_df_list)
+ex3_clip_ggarr <- plot_arr_df_list(ex3_clip_df_list)
+ex3_resample_ggarr <- plot_arr_df_list(ex3_resample_df_list)
 
 
 ### write plots to pdf ###
@@ -448,9 +482,9 @@ writePDF <- function(ex_ip, ex_dp, ex_r, path){
   dev.off()
 }
 
-writePDF(ex1_individual_plots, ex1_deployment_plots, ex1_ggarr_resampled, ex1_pdf_dest)
-writePDF(ex2_individual_plots, ex2_deployment_plots, ex2_ggarr_resampled, ex2_pdf_dest)
-writePDF(ex3_individual_plots, ex3_deployment_plots, ex3_ggarr_resampled, ex3_pdf_dest)
+writePDF(ex1_individual_plots, ex1_deployment_plots, ex1_resample_ggarr, ex1_pdf_dest)
+writePDF(ex2_individual_plots, ex2_deployment_plots, ex2_resample_ggarr, ex2_pdf_dest)
+writePDF(ex3_individual_plots, ex3_deployment_plots, ex3_resample_ggarr, ex3_pdf_dest)
 
 ### save ggarranged plots as individual images ###
 savePlots <- function(ex_ip, ex_dp, ex_r, path){
@@ -474,16 +508,18 @@ savePlots <- function(ex_ip, ex_dp, ex_r, path){
   i = 1
   for(plot in ex_r){
     pngPath = paste(sep="",path,"/","resample_",column[i],".png")
-    png(file=pngPath,width=595,height=842)
+    # png(file=pngPath,width=595,height=842)
+    # png(file=pngPath,width=842,height=595)
+    png(file=pngPath,width=8,height=5,units="in",res=150) # 150/300?
     print(plot)
     dev.off()
     i = i + 1
   }
 }
 
-savePlots(ex1_individual_plots, ex1_deployment_plots, ex1_ggarr_resampled, ex1_output_dir)
-savePlots(ex2_individual_plots, ex2_deployment_plots, ex2_ggarr_resampled, ex2_output_dir)
-savePlots(ex3_individual_plots, ex3_deployment_plots, ex3_ggarr_resampled, ex3_output_dir)
+savePlots(ex1_individual_plots, ex1_deployment_plots, ex1_resample_ggarr, ex1_output_dir)
+savePlots(ex2_individual_plots, ex2_deployment_plots, ex2_resample_ggarr, ex2_output_dir)
+savePlots(ex3_individual_plots, ex3_deployment_plots, ex3_resample_ggarr, ex3_output_dir)
 
 ##### I need a function that checks timestamp intervals based on settings #####
 # interval 60 min
@@ -491,6 +527,3 @@ savePlots(ex3_individual_plots, ex3_deployment_plots, ex3_ggarr_resampled, ex3_o
 # start-up delay: 0 min
 # inter-burst delay: 1 min
 # burst size (readings): 10
-
-
-

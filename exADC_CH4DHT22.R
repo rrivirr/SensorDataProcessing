@@ -1,5 +1,5 @@
 # exADC_CH4DHT22.R created Apr 4, 2022 by Ken Chong
-# Last edit: Apr 25, 2022 by Ken Chong
+# Last edit: Apr 26, 2022 by Ken Chong
 #
 # Code to process WaterBear sonde data containing output from one Figaro NGM2611-E13 methane sensor, and one Adafruit DHT22 temperature and humidity sensor
 # Produces individual plots for specified columns vs time per deployed WaterBear
@@ -7,19 +7,17 @@
 # Produces aggregate plots for specified columns vs three clips for the entire experiment
 # 
 # Additional goals:
-# Aggregate and average by burst size, then create hourly plots
-# Arrange and add plots to output pdf
+# Aggregate and average by burst size, then create hourly plots [clip function is a start]
 # Create system to flag potentially erroneous data for inspection
 # Backup produced files or original data (or separate bash script)?
+# I need a function that checks timestamp intervals based on settings
 #
 # Thoughts and considerations:
 # Should this script take user input? For values that are hardcoded currently
 #   Depends on how often script will have to be run
+# Should data always be resampled? The only one that shows extreme variation that might need to be kept is battery voltage
 #
 # note to self: ctrl+shift+c to comment toggle line(s)
-
-# install.packages('NCmisc')
-# install.packages('tidyverse')
 
 ### Required Packages ###
 library(dplyr) # bind, relocate
@@ -28,7 +26,7 @@ library(ggplot2) # plotting package
 library(ggpubr) # ggarrange
 library(grid) # textGrob
 # library(tidyverse) # 
-# library(data.table) # melt
+# library(data.table) # 
 # library(stringr) #not used currently
 # library(gridExtra) #not used currently
 
@@ -37,14 +35,15 @@ library(grid) # textGrob
 # list.functions.in.file('exADC_CH4DHT22.R',alphabetic=TRUE)
 
 ### garbage collection lines ###
-rm(list = ls()) # clear R working memory
-graphics.off() # close any open plots
+# rm(list = ls()) # clear R working memory
+# graphics.off() # close any open plots
 
 ### R Options ###
 options('digits'=15) # default is 7, increasing to show full precision of numbers (mainly time.s needs at least 13)
 
 ### R SCRIPT SETTINGS ###
-# path to folder with main data folder in it
+# path to folder with main data folders in it
+# ! THIS IS THE ONLY THING THAT NEEDS TO BE CHANGED IF ALL DATAFOLDERS ARE THERE ! #
 wd = "~/Desktop" #linux path
 
 # custom color palettes: #
@@ -82,12 +81,13 @@ ex3_qc_dest = paste(sep="",ex3_output_dir,ex3_folder,"_QC.txt")
 ### USER INPUT - EXPERIMENT SETTINGS ###
 # assuming same settings for all currently #
 # ideally read from a header in the future #
-wakeInterval <- 60 #min
-burstCycles <- 20
-startupDelay <- 0 #min
-interBurstDelay <- 1 #min
-readingCount <- 10
-readingsPerWake <- burstCycles * readingCount
+# not currently used #
+# wakeInterval <- 60 #min
+# burstCycles <- 20
+# startupDelay <- 0 #min
+# interBurstDelay <- 1 #min
+# readingCount <- 10
+# readingsPerWake <- burstCycles * readingCount
 
 # hardcoded columns to plot and corresponding y-axis labels
 column = c('battery.V','ch4rf_raw','ch4_raw','dht_C','dht_RH')
@@ -188,7 +188,9 @@ plot_Y_v_Time <-function(df){
     for(j in 1:unqDeploy_L){
       YvT[[ column[i] ]][[ commonName[j] ]] = ggplot(data=subset(df, cName==commonName[j]))+
         geom_point(aes_string(x="dtp",y=column[i]),size=1)+theme_classic(base_size=12)+
-        ylab(ylabs[i])+xlab("Date")+ggtitle(commonName[j])+scale_x_datetime(date_labels="%m/%d %H:%M",breaks=scales::pretty_breaks(n=3))
+        ylab(ylabs[i])+xlab("Date")+ggtitle(commonName[j])+
+        scale_color_manual(values=custom_colors2,na.translate=F)+
+        scale_x_datetime(date_labels="%m/%d %H",breaks=scales::pretty_breaks(n=4),expand=c(0,60*120))
     }
   }
   return(YvT)
@@ -205,8 +207,9 @@ plot_Sonde_v_Time <-function(df){
   for ( i in 1:col_L ){
     DvT[[i]] = ggplot(data=df)+
       geom_point(aes_string(x="dtp",y=column[i],color="cName"),size=1)+theme_classic(base_size=12)+
-      ylab(ylabs[i])+xlab("Date")+scale_x_datetime(date_labels="%m/%d %H:%M",breaks=scales::pretty_breaks(n=3))+scale_color_discrete(name="Sonde")
-      # ylab(ylabs[i])+xlab("Date (M/D Hr)")+scale_x_datetime(date_labels="%m/%d %H",date_breaks="10 hours")+scale_color_discrete(name="Sonde")
+      labs(x="Date", y=ylabs[i], color=NULL)+
+      scale_color_manual(values=custom_colors2,na.translate=F)+
+      scale_x_datetime(date_labels="%m/%d %H",breaks=scales::pretty_breaks(n=4),expand=c(0,60*5))
   }
   return(DvT)
 }
@@ -219,15 +222,6 @@ createNamesTable <- function(df){
   }
   return(unqDeploy)
 }
-
-### flagging errors ###
-# no data values, values that should be nan?
-# gross min/max limits:
-# battery.v, ch4rf_raw, ch4_raw [0, 4096] unitless
-# dht_C [ -30, 50 ] celsius
-# dht_R [0, 100] percent
-# time.s [ 2000, 2024 ]
-# overall range check: based on meta data, in and out of range?
 
 # limits set by "grossLimits" in global conditions
 grossErrors <- function(df){
@@ -247,21 +241,17 @@ grossErrors <- function(df){
 writeQC <- function(df, path){
   cleanFile(path)
   sondes <- as.character(unlist(unique(df['cName'])))
+  print(sondes)
   qcSummary <- data.frame(row.names=sondes)
   qcStep <- c('NaN','grossError')
   for(step in qcStep){
-    # print(step)
     for(wb in sondes){
-      # print(wb)
       for(col in colMetrics){
-        # print(col)
-        print(df$cName)
         wbSubset <- df[ which(df$cName == wb),]
-        # print(wbSubset)
         name <- paste(sep=".",col,step)
         qcSummary[wb,name] <- sum(is.nan(wbSubset[,col]))
       }
-    }-
+    }
     if(step == qcStep[1]){
       df <- grossErrors(df) # process gross errors in dataframe #
     }
@@ -274,8 +264,6 @@ writeQC <- function(df, path){
   write.table(qcSummary, file=path, row.names=FALSE, sep="\t")
   return(df)
 }
-
-ex1_df_dt_QC <- writeQC(ex1_df_dt, ex1_qc_dest)
 
 #calculate statistics for one column of data
 calculateMetrics <- function(x){
@@ -291,8 +279,6 @@ writeMetrics <- function(df, path){
     rnd = colRnd[i]
     metrics = aggregate(x, data=df, FUN=calculateMetrics, na.action=na.omit)
     metricRnd = round(metrics[2],rnd)
-    # y = colnames(metricRnd[])
-    # z = colnames(metricRnd[,])
     metricRnd$sonde <- sondes
     metricRnd <- metricRnd[,c('sonde',colMetrics[i])]
     write.table(metricRnd, file=path, append=TRUE, row.names=FALSE, sep="\t")
@@ -386,7 +372,7 @@ plot_arr_df_list <- function(df_list){
         scale_x_datetime(date_labels="%H:%M",breaks=scales::pretty_breaks(n=5),expand=c(0,30))+
         ylim(yMin,yMax)
     }
-    ##### note to self: ggarrange all of the plots together, annotate each row / shared y axis for each row
+    ##### note to self: ggarrange ALL (except battery) of the plots together, annotate each row / shared y axis for each row
     ggarrPlots[[ column[i] ]] <- ggarrange(ncol=3, plotlist=valuePlots[[ column[i] ]], common.legend=TRUE, align='hv', labels=c('A','B','C'), hjust=-1) #
     ggarrPlots[[ column[i] ]] <- annotate_figure( ggarrPlots[[ column[i] ]], 
                                                   left=textGrob(ylabs[i], rot=90, vjust=0.5, gp=gpar(fontsize=14)), 
@@ -394,8 +380,6 @@ plot_arr_df_list <- function(df_list){
   }
   return(ggarrPlots)
 }
-
-# ex3_resample_ggarr <- plot_arr_df_list(ex3_resample_df_list)
 
 ### Process experiment data
 #process experiment 1
@@ -491,15 +475,16 @@ savePlots <- function(ex_ip, ex_dp, ex_r, path){
   i = 1
   for(plot in ex_ip){
     pngPath = paste(sep="",path,"/","raw_",column[i],".png")
-    individualGrid <- ggarrange(plotlist=plot, ncol=2, nrow=2, common.legend=TRUE, align='v')
+    individualGrid <- ggarrange(plotlist=plot, ncol=2, nrow=2, common.legend=TRUE, align='hv')
     png(file=pngPath,width=595,height=595)
+    # png(file=pngPath,width=6,height=6,units="in",res=150)
     print(individualGrid)
     dev.off()
     i = i + 1
   }
   
   pngPath = paste(sep="",path,"/raw_experiment.png")
-  deploymentGrid <- ggarrange(plotlist=ex_dp, ncol=2, nrow=3, common.legend=TRUE, align='v')
+  deploymentGrid <- ggarrange(plotlist=ex_dp, ncol=2, nrow=3, common.legend=TRUE, align='hv')
   png(file=pngPath,width=595,height=842) # A4 paper dimensions at 72 DPI
   # png(file=pngPath,width=2480,height=3508) # A4 paper dimensions at 300 DPI
   print(deploymentGrid)
@@ -520,10 +505,3 @@ savePlots <- function(ex_ip, ex_dp, ex_r, path){
 savePlots(ex1_individual_plots, ex1_deployment_plots, ex1_resample_ggarr, ex1_output_dir)
 savePlots(ex2_individual_plots, ex2_deployment_plots, ex2_resample_ggarr, ex2_output_dir)
 savePlots(ex3_individual_plots, ex3_deployment_plots, ex3_resample_ggarr, ex3_output_dir)
-
-##### I need a function that checks timestamp intervals based on settings #####
-# interval 60 min
-# burst number: 20
-# start-up delay: 0 min
-# inter-burst delay: 1 min
-# burst size (readings): 10

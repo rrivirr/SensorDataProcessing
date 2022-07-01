@@ -83,7 +83,7 @@ for(i in unique(ex3_df_dt$site)){
 	ex3_df_dt_0<-subset(ex3_df_dt,site==i)
 ex3_df_dt_0$group <- cumsum(ifelse(difftime(ex3_df_dt_0$dtp,
                                   shift(ex3_df_dt_0$dtp, fill = ex3_df_dt_0$dtp[1]), 
-                                  units = "mins") >= 15 
+                                  units = "mins") >= 25 
                          ,1, 0)) + 1
 ex3_df_dt_0$seq <- ave(ex3_df_dt_0$ch4rf_raw, ex3_df_dt_0$group, FUN = seq_along)
 ex3_df_dt_diff<-as.data.frame(ex3_df_dt_0 %>% group_by(group) %>% mutate(min_time = min(dtp, na.rm = TRUE)))
@@ -104,7 +104,7 @@ geom_point(aes(color=group))+
 facet_wrap(.~site)
 
 	
-ggplot(ex3_df_dt_g,aes(x=seq,y=ch4rf_raw))+
+ggplot(ex3_df_dt_g,aes(x=time_diff,y=ch4rf_raw))+
 geom_point(aes(color=group))+
 facet_wrap(.~site)	
 

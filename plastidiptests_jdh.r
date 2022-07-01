@@ -129,8 +129,9 @@ for(i in 2:nrow(raw_bin_21008)){
 }
 
 ggplot(raw_bin_21008,aes(dtp,ch4_raw))+
-geom_point(size=2)
+geom_point(size=2,aes(color=group))
 
+raw_bin_21008<-subset(raw_bin_21008,type=="raw")
 
 report<-data.frame()
 for(j in 1:max(raw_bin_21008$group)){
@@ -142,7 +143,7 @@ for(j in 1:max(raw_bin_21008$group)){
 	group_sub$runsd = runsd(group_sub$ch4_raw, 10, endrule="sd")
 	group_sub$runcv<-group_sub$runsd/group_sub$runmean
 	
-#	invisible(readline(prompt="Press [enter] to continue"))
+	invisible(readline(prompt="Press [enter] to continue"))
 	
 	gsmelt<-melt(group_sub[,c("time.s","runmean","runsd","runcv","ch4_raw")],id.vars=c("time.s"))
 	meltplot<-ggplot(gsmelt,aes(time.s,value))+
@@ -152,8 +153,8 @@ for(j in 1:max(raw_bin_21008$group)){
 	print(meltplot)
 		
 		
-	temp_report<-data.frame(group=j,min_cv=min(group_sub$runcv),min_sd=min(group_sub$runsd),first_cv_below_02=min(which(group_sub$runcv<0.005)))
+	temp_report<-data.frame(group=j,min_cv=min(group_sub$runcv),min_sd=min(group_sub$runsd),first_cv_below_005=min(which(group_sub$runcv<0.005)))
 	report<-bind_rows(report,temp_report)
-#	invisible(readline(prompt="Press [enter] to continue"))
+	invisible(readline(prompt="Press [enter] to continue"))
 	
 }

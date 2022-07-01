@@ -13,7 +13,7 @@
 # I need a function that checks timestamp intervals based on settings
 #
 # Thoughts and considerations:
-# Should this script take user input? For values that are hardcoded currently
+# Should this script take user input? Ffor values that are hardcoded currently
 #   Depends on how often script will have to be run
 # Should data always be resampled? The only one that shows extreme variation that might need to be kept is battery voltage
 #
@@ -44,45 +44,69 @@ options('digits'=15) # default is 7, increasing to show full precision of number
 ### R SCRIPT SETTINGS ###
 # path to folder with main data folders in it
 # ! THIS IS THE ONLY THING THAT NEEDS TO BE CHANGED IF ALL DATAFOLDERS ARE THERE ! #
-wd = "~/Desktop" #linux path
+# wd = "~/Desktop/data/CH4TempRH" #linux path
+wd2 = "~/Desktop/data/productionTests" #linux path
 
-# custom color palettes: #
+# custom 4 color palettes: #
 custom_colors=c('#AD4CFB','#E6D500','#D81B60','#05CACA')
 custom_colors2=c('#7000CC','#E22C7B','#FFAF2A','#00AAAA') #00CACA
 
 # USER INPUT - BASE EXPERIMENT FOLDER NAME #
-ex1_folder = "4xCH4DHT22_20220401"
-ex2_folder = "4xCH4DHT22_20220408"
-ex3_folder = "4xCH4DHT22_20220411"
-ex4_folder = "4xCH4DHT22_20220511"
+# ex1_folder = "4xCH4DHT22_20220401"
+# ex2_folder = "4xCH4DHT22_20220408"
+# ex3_folder = "4xCH4DHT22_20220411"
+# ex4_folder = "4xCH4DHT22_20220511"
 
-ex1_path = paste(sep="",wd,"/",ex1_folder)
-ex2_path = paste(sep="",wd,"/",ex2_folder)
-ex3_path = paste(sep="",wd,"/",ex3_folder)
-ex4_path = paste(sep="",wd,"/",ex4_folder)
+pt1_folder = "20220608"
+pt2_folder = "plastidipTest1"
+pt3_folder = "plastidipTest2"
+
+# ex1_path = paste(sep="",wd,"/",ex1_folder)
+# ex2_path = paste(sep="",wd,"/",ex2_folder)
+# ex3_path = paste(sep="",wd,"/",ex3_folder)
+# ex4_path = paste(sep="",wd,"/",ex4_folder)
+
+pt1_path = paste(sep="",wd2,"/",pt1_folder)
+pt2_path = paste(sep="",wd2,"/",pt2_folder)
+pt3_path = paste(sep="",wd2,"/",pt3_folder)
 
 # destination folder and name of file to create for plot and metadata output, based on experiment folder name
   # have each function build the output names?
-ex1_output_dir = paste(sep="",ex1_path,"/output/")
-ex2_output_dir = paste(sep="",ex2_path,"/output/")
-ex3_output_dir = paste(sep="",ex3_path,"/output/")
-ex4_output_dir = paste(sep="",ex4_path,"/output/")
+# ex1_output_dir = paste(sep="",ex1_path,"/output/")
+# ex2_output_dir = paste(sep="",ex2_path,"/output/")
+# ex3_output_dir = paste(sep="",ex3_path,"/output/")
+# ex4_output_dir = paste(sep="",ex4_path,"/output/")
 
-ex1_pdf_dest = paste(sep="",ex1_output_dir,ex1_folder,"_plots.pdf")
-ex2_pdf_dest = paste(sep="",ex2_output_dir,ex2_folder,"_plots.pdf")
-ex3_pdf_dest = paste(sep="",ex3_output_dir,ex3_folder,"_plots.pdf")
-ex4_pdf_dest = paste(sep="",ex4_output_dir,ex4_folder,"_plots.pdf")
+pt1_output_dir = paste(sep="",pt1_path,"_output/")
+pt2_output_dir = paste(sep="",pt2_path,"_output/")
+pt3_output_dir = paste(sep="",pt3_path,"_output/")
 
-ex1_metadata_dest = paste(sep="",ex1_output_dir,ex1_folder,"_METADATA.txt")
-ex2_metadata_dest = paste(sep="",ex2_output_dir,ex2_folder,"_METADATA.txt")
-ex3_metadata_dest = paste(sep="",ex3_output_dir,ex3_folder,"_METADATA.txt")
-ex4_metadata_dest = paste(sep="",ex4_output_dir,ex4_folder,"_METADATA.txt")
+# ex1_pdf_dest = paste(sep="",ex1_output_dir,ex1_folder,"_plots.pdf")
+# ex2_pdf_dest = paste(sep="",ex2_output_dir,ex2_folder,"_plots.pdf")
+# ex3_pdf_dest = paste(sep="",ex3_output_dir,ex3_folder,"_plots.pdf")
+# ex4_pdf_dest = paste(sep="",ex4_output_dir,ex4_folder,"_plots.pdf")
 
-ex1_qc_dest = paste(sep="",ex1_output_dir,ex1_folder,"_QC.txt")
-ex2_qc_dest = paste(sep="",ex2_output_dir,ex2_folder,"_QC.txt")
-ex3_qc_dest = paste(sep="",ex3_output_dir,ex3_folder,"_QC.txt")
-ex4_qc_dest = paste(sep="",ex4_output_dir,ex4_folder,"_QC.txt")
+pt1_pdf_dest = paste(sep="",pt1_output_dir,pt1_folder,"_plots.pdf")
+pt2_pdf_dest = paste(sep="",pt2_output_dir,pt2_folder,"_plots.pdf")
+pt3_pdf_dest = paste(sep="",pt3_output_dir,pt3_folder,"_plots.pdf")
 
+# ex1_metadata_dest = paste(sep="",ex1_output_dir,ex1_folder,"_METADATA.txt")
+# ex2_metadata_dest = paste(sep="",ex2_output_dir,ex2_folder,"_METADATA.txt")
+# ex3_metadata_dest = paste(sep="",ex3_output_dir,ex3_folder,"_METADATA.txt")
+# ex4_metadata_dest = paste(sep="",ex4_output_dir,ex4_folder,"_METADATA.txt")
+
+pt1_metadata_dest = paste(sep="",pt1_output_dir,pt1_folder,"_METADATA.txt")
+pt2_metadata_dest = paste(sep="",pt2_output_dir,pt2_folder,"_METADATA.txt")
+pt3_metadata_dest = paste(sep="",pt3_output_dir,pt3_folder,"_METADATA.txt")
+
+# ex1_qc_dest = paste(sep="",ex1_output_dir,ex1_folder,"_QC.txt")
+# ex2_qc_dest = paste(sep="",ex2_output_dir,ex2_folder,"_QC.txt")
+# ex3_qc_dest = paste(sep="",ex3_output_dir,ex3_folder,"_QC.txt")
+# ex4_qc_dest = paste(sep="",ex4_output_dir,ex4_folder,"_QC.txt")
+
+pt1_qc_dest = paste(sep="",pt1_output_dir,pt1_folder,"_QC.txt")
+pt2_qc_dest = paste(sep="",pt2_output_dir,pt2_folder,"_QC.txt")
+pt3_qc_dest = paste(sep="",pt3_output_dir,pt3_folder,"_QC.txt")
 
 ### USER INPUT - EXPERIMENT SETTINGS ###
 # assuming same settings for all currently #
@@ -138,7 +162,7 @@ cleanFile <-function(path){
 
 newDir <- function(dirPath){
   if(dir.exists(dirPath)){
-    return()
+    cat(print("Output directory already exists\n"))
   }
   else{
     cat(sprintf("Output directory not found, creating: %s\n",dirPath))
@@ -146,26 +170,38 @@ newDir <- function(dirPath){
   }
 }
 
-newDir(ex1_output_dir)
-newDir(ex2_output_dir)
-newDir(ex3_output_dir)
-newDir(ex4_output_dir)
+# newDir(ex1_output_dir)
+# newDir(ex2_output_dir)
+# newDir(ex3_output_dir)
+# newDir(ex4_output_dir)
+
+newDir(pt1_output_dir)
+newDir(pt2_output_dir)
+newDir(pt3_output_dir)
 
 #iterate folders in experiment directory, get list of all files in each folder and then append them
 #NOTE: does not remove "debug" lines atm, didn't have any at the time
 merge_ex_csvs <- function(exDir){
-  data_dirs <- list.files(path=exDir, pattern="ABElab*", all.files=FALSE) # pull all dirs starting with ABElab
+  # data_dirs <- list.files(path=exDir, pattern="ABElab*", all.files=FALSE) # pull all dirs starting with ABElab
+  data_dirs <- list.files(path=exDir, all.files=FALSE) # pull all dirs starting with ABElab
   compiled_data<-data.frame() #prepare data frame to hold info from all csv files
-  
+
   #iterate folders in working directory
   for(i in 1:length(data_dirs)){
     currentdir<-paste(exDir,"/",data_dirs[i],sep="")
     data_files<-list.files(path=paste(currentdir)) #find all files in sub directory
-    #read each .csv
+    # read each .csv
     for(j in 1:length(data_files)){
-      data<-read.csv(paste(currentdir,"/",data_files[j],sep=""))
-      if(nrow(data)>0){ #append all csv data into one file
-        compiled_data<-bind_rows(compiled_data,data)
+      currentfile <- paste(currentdir,"/",data_files[j],sep="")
+      if(file.info(currentfile)[,1] != 0){
+        data<-read.csv(currentfile)
+
+        ### manually correcting df column type
+        data$site <- as.character(data$site)
+
+        if(nrow(data)>0){ #append all csv data into one file
+          compiled_data<-bind_rows(compiled_data,data)
+        }
       }
     }
   }
@@ -217,6 +253,33 @@ plot_Y_v_Time <-function(df){
   return(YvT)
 }
 
+plot_Y_v_Time2 <-function(df){
+  ##list of lists, where list values are the names of the columns and common names for the deployments
+  YvT = vector('list', col_L)
+  names(YvT) = column
+  
+  loggers = as.character( unlist( unique( df['logger'] ) ) )
+  unqDeploy_L = length( loggers )
+  
+  #initialize empty double list to hold plots
+  for(i in 1:col_L){
+    YvT[[ column[i] ]] = vector('list', unqDeploy_L)
+    names( YvT[[ column[i] ]] ) = loggers
+  }
+  
+  for(i in 1:col_L){
+    for(j in 1:unqDeploy_L){
+      YvT[[ column[i] ]][[ loggers[j] ]] = ggplot(data=subset(df, logger==loggers[j]))+
+        geom_point(aes_string(x="dtp",y=column[i]),size=1)+theme_classic(base_size=12)+
+        ylab(ylabs[i])+xlab("Date")+ggtitle(loggers[j])
+      # +
+      #   scale_color_manual(values=custom_colors2,na.translate=F)+
+      #   scale_x_datetime(date_labels="%m/%d %H",breaks=scales::pretty_breaks(n=4),expand=c(0,60*120))
+    }
+  }
+  return(YvT)
+}
+
 #### generate deployment vs time plots ####
 ## basic version, see commit 9644284 on Apr 12, 2022 for expanded version
 plot_Sonde_v_Time <-function(df){
@@ -235,7 +298,25 @@ plot_Sonde_v_Time <-function(df){
   return(DvT)
 }
 
+plot_Logger_v_Time <-function(df){
+  # initialize list to hold plots
+  DvT = vector('list', col_L)
+  names(DvT) = column
+  
+  # plot each column vs time with all deployments into list
+  for ( i in 1:col_L ){
+    DvT[[i]] = ggplot(data=df)+
+      geom_point(aes_string(x="dtp",y=column[i],color="logger"),size=1)+theme_classic(base_size=12)+
+      labs(x="Date", y=ylabs[i], color=NULL)
+    # +
+    #   scale_color_manual(values=custom_colors2,na.translate=F)+
+    #   scale_x_datetime(date_labels="%m/%d %H",breaks=scales::pretty_breaks(n=4),expand=c(0,60*5))
+  }
+  return(DvT)
+}
+
 #currently just serially creates names following the format of "WaterBear-X" with X ranging 1 to the number of unique deployments in the data
+# this will no longer be necessary with the addition of the loggerName column
 createNamesTable <- function(df){
   unqDeploy = unique(df['deployment'])
   for(i in 1:length(unqDeploy[,1])){
@@ -286,6 +367,36 @@ writeQC <- function(df, path){
   return(df)
 }
 
+# write the QC results for an experiment to the provided path .txt
+# cumulative NaN counts
+# returns processed df
+writeQC2 <- function(df, path){
+  cleanFile(path)
+  loggers <- as.character(unlist(unique(df['logger'])))
+  print(loggers)
+  qcSummary <- data.frame(row.names=loggers)
+  qcStep <- c('NaN','grossError')
+  for(step in qcStep){
+    for(wb in loggers){
+      for(col in colMetrics){
+        wbSubset <- df[ which(df$logger == wb),]
+        name <- paste(sep=".",col,step)
+        qcSummary[wb,name] <- sum(is.nan(wbSubset[,col]))
+      }
+    }
+    if(step == qcStep[1]){
+      df <- grossErrors(df) # process gross errors in dataframe #
+    }
+    else if(step == qcStep[2]){
+      # perform next QC process, currently there is none. #
+    }
+  }
+  qcSummary$logger <- loggers
+  qcSummary <- relocate(qcSummary, logger)
+  write.table(qcSummary, file=path, row.names=FALSE, sep="\t")
+  return(df)
+}
+
 # hardcoded columns to calculate metrics for:
 colMetrics = c('time.s','battery.V','ch4rf_raw','ch4_raw','dht_C','dht_RH')
 # hardcoded decimal digits to round to for each column
@@ -312,10 +423,49 @@ writeMetrics <- function(df, path){
   }
 }
 
+# write the metrics for an experiment to the provided path .txt
+writeMetrics2 <- function(df, path){
+  cleanFile(path)
+  loggers <- as.character(unlist(unique(df['logger'])))
+  for (i in 1:length(colMetrics)){
+    x = as.formula(paste(colMetrics[i],"~logger"))
+    rnd = colRnd[i]
+    metrics = aggregate(x, data=df, FUN=calculateMetrics, na.action=na.omit)
+    metricRnd = round(metrics[2],rnd)
+    metricRnd$logger <- loggers
+    metricRnd <- metricRnd[,c('logger',colMetrics[i])]
+    write.table(metricRnd, file=path, append=TRUE, row.names=FALSE, sep="\t")
+    write("", file=path, append=TRUE)
+  }
+}
+
 #return 3 x ~1hr clips from the  start, middle, and end of the data sets
 # eventually, clip data sets by every single hour for hourly plots?
 clipData <- function(df){
   groupTime <- group_by(df, cName)
+  temp <- summarise(groupTime, maxTimes = max(time.s, na.rm=TRUE))
+  maxTime = min(temp['maxTimes']) # earliest end time among data sets
+  temp <- summarise(groupTime, minTimes = min(time.s, na.rm=TRUE))
+  minTime = max(temp['minTimes']) # latest start time among data sets
+  
+  middle = (maxTime - minTime) / 2
+  hour = 60 * 60 # 60min * 60seconds/minute
+  halfHour = 30 * 60 # 30min * 60seconds/minute
+  
+  midStart = minTime + middle - halfHour
+  midEnd = minTime + middle + halfHour
+  
+  # finagled due to 20 minutes of readings per hour, figure out a better way to extract one burst cycle
+  first <- df[ which(df$time.s > minTime & df$time.s < (minTime + halfHour)), ]
+  middle <- df[ which(df$time.s > midStart & df$time.s < midEnd), ]
+  last <- df[ which(df$time.s > (maxTime - halfHour) & df$time.s < maxTime) , ]
+  
+  hour_clip = list('first'=first, 'middle'=middle, 'last'=last)
+  return(hour_clip)
+}
+
+clipData2 <- function(df){
+  groupTime <- group_by(df, logger)
   temp <- summarise(groupTime, maxTimes = max(time.s, na.rm=TRUE))
   maxTime = min(temp['maxTimes']) # earliest end time among data sets
   temp <- summarise(groupTime, minTimes = min(time.s, na.rm=TRUE))
@@ -356,6 +506,22 @@ resampleData <- function(df){
   return(means)
 }
 
+resampleData2 <- function(df){
+  #only works with the 10 reading burst taking under a second, maybe just average based on every 10 readings / burst size in the future
+  grouped <- group_by(df, logger, sec)
+  
+  #hardcoded names and columns, base off of colMetrics in the future
+  means <- summarise(grouped,
+                     battery.V = round( mean(battery.V), colRnd[2] ),
+                     ch4rf_raw = round( mean(ch4rf_raw), colRnd[3] ),
+                     ch4_raw = round( mean(ch4_raw), colRnd[4] ),
+                     dht_C = round( mean(dht_C), colRnd[5] ),
+                     dht_RH = round( mean(dht_RH), colRnd[6] )
+  )
+  # means <- summarise(grouped, mean(battery.V), mean(ch4rf_raw), mean(ch4_raw), mean(dht_C), mean(dht_RH))
+  return(means)
+}
+
 # takes a list of dataframes and returns a list of resampled dataframes
 resample_df_list <- function(df_list){
   items = names(df_list)
@@ -364,6 +530,17 @@ resample_df_list <- function(df_list){
   names(resample) = items
   for(i in items){
     resample[[i]]= resampleData(df_list[[i]])
+  }
+  return(resample)
+}
+
+resample_df_list2 <- function(df_list){
+  items = names(df_list)
+  
+  resample <- vector('list', length(df_list))
+  names(resample) = items
+  for(i in items){
+    resample[[i]]= resampleData2(df_list[[i]])
   }
   return(resample)
 }
@@ -379,7 +556,7 @@ plot_arr_df_list <- function(df_list){
     valuePlots[[ column[i] ]] = vector('list', length(df_list))
     names( valuePlots[[ column[i] ]]) = hours
   }
-  
+
   # initialize list to hold ggarranged plots, 1 per colMetrics
   ggarrPlots <- vector('list', col_L) 
   names(ggarrPlots) = column
@@ -407,42 +584,101 @@ plot_arr_df_list <- function(df_list){
   return(ggarrPlots)
 }
 
+plot_arr_df_list2 <- function(df_list){
+  # initialize list of lists to hold intermediary plots, 1 plot per resampled hour, per colMetrics
+  hours = names(df_list)
+  valuePlots <- vector('list', col_L)
+  names(valuePlots) = column
+  for(i in 1:col_L){
+    valuePlots[[ column[i] ]] = vector('list', length(df_list))
+    names( valuePlots[[ column[i] ]]) = hours
+  }
+  
+  # initialize list to hold ggarranged plots, 1 per colMetrics
+  ggarrPlots <- vector('list', col_L) 
+  names(ggarrPlots) = column
+  
+  for(i in 1:col_L){
+    # based on number of clips = 3
+    yMax=max( df_list[[ hours[1] ]][ column[i] ], df_list[[ hours[2] ]][ column[i] ], df_list[[ hours[3] ]][ column[i] ] )
+    yMin=min( df_list[[ hours[1] ]][ column[i] ], df_list[[ hours[2] ]][ column[i] ], df_list[[ hours[3] ]][ column[i] ] )
+    for(hr in hours){
+      df <- data.frame( df_list[[ hr ]] )
+      df$dtp <- as.POSIXct(df$sec, tz='gmt', origin='1970-01-01 00:00:00')
+      
+      valuePlots[[ column[i] ]][[ hr ]] <- ggplot(data=df, aes_string(x='dtp', color='logger', y=column[i]))+
+        geom_point(size=2)+geom_line(size=1)+theme_classic(base_size = 14)+labs(x=NULL, y=NULL, color=NULL)
+      # +
+      #   scale_color_manual(values=custom_colors2,na.translate=F)+
+      #   scale_x_datetime(date_labels="%H:%M",breaks=scales::pretty_breaks(n=5),expand=c(0,30))+
+      #   ylim(yMin,yMax)
+    }
+    ##### note to self: ggarrange ALL (except battery) of the plots together, annotate each row / shared y axis for each row
+    ggarrPlots[[ column[i] ]] <- ggarrange(ncol=3, plotlist=valuePlots[[ column[i] ]], common.legend=TRUE, align='hv', labels=c('A','B','C'), hjust=-1) #
+    ggarrPlots[[ column[i] ]] <- annotate_figure( ggarrPlots[[ column[i] ]], 
+                                                  left=textGrob(ylabs[i], rot=90, vjust=0.5, gp=gpar(fontsize=14)), 
+                                                  bottom=textGrob('Time', vjust=-0.25, gp=gpar(fontsize=14)))
+  }
+  return(ggarrPlots)
+}
+
 ### Process experiment data
 #process experiment 1
-ex1_df <- merge_ex_csvs(ex1_path)
-ex1_df_dt <- process_time(ex1_df)
-ex1_lookupTable <- createNamesTable(ex1_df_dt)
-ex1_df_dt$cName <- ex1_lookupTable$cName[match(ex1_df_dt$deployment, ex1_lookupTable$deployment)]
-ex1_df_dt$cName <- as.factor(ex1_df_dt$cName)
+# ex1_df <- merge_ex_csvs(ex1_path)
+# ex1_df_dt <- process_time(ex1_df)
+# ex1_lookupTable <- createNamesTable(ex1_df_dt)
+# ex1_df_dt$cName <- ex1_lookupTable$cName[match(ex1_df_dt$deployment, ex1_lookupTable$deployment)]
+# ex1_df_dt$cName <- as.factor(ex1_df_dt$cName)
 
 #process experiment 2
-ex2_df <- merge_ex_csvs(ex2_path)
-ex2_df_dt <- process_time(ex2_df)
-ex2_lookupTable <- createNamesTable(ex2_df_dt)
-ex2_df_dt$cName <- ex2_lookupTable$cName[match(ex2_df_dt$deployment, ex2_lookupTable$deployment)]
-ex2_df_dt$cName <- as.factor(ex2_df_dt$cName)
+# ex2_df <- merge_ex_csvs(ex2_path)
+# ex2_df_dt <- process_time(ex2_df)
+# ex2_lookupTable <- createNamesTable(ex2_df_dt)
+# ex2_df_dt$cName <- ex2_lookupTable$cName[match(ex2_df_dt$deployment, ex2_lookupTable$deployment)]
+# ex2_df_dt$cName <- as.factor(ex2_df_dt$cName)
 
 #process experiment 3
-ex3_df <- merge_ex_csvs(ex3_path)
-ex3_df_dt <- process_time(ex3_df)
-ex3_lookupTable <- createNamesTable(ex3_df_dt)
-ex3_df_dt$cName <- ex3_lookupTable$cName[match(ex3_df_dt$deployment, ex3_lookupTable$deployment)]
-ex3_df_dt$cName <- as.factor(ex3_df_dt$cName)
+# ex3_df <- merge_ex_csvs(ex3_path)
+# ex3_df_dt <- process_time(ex3_df)
+# ex3_lookupTable <- createNamesTable(ex3_df_dt)
+# ex3_df_dt$cName <- ex3_lookupTable$cName[match(ex3_df_dt$deployment, ex3_lookupTable$deployment)]
+# ex3_df_dt$cName <- as.factor(ex3_df_dt$cName)
 
 #process experiment 4
-ex4_df <- merge_ex_csvs(ex4_path)
-ex4_df_dt <- process_time(ex4_df)
-ex4_lookupTable <- createNamesTable(ex4_df_dt)
-ex4_df_dt$cName <- ex4_lookupTable$cName[match(ex4_df_dt$deployment, ex4_lookupTable$deployment)]
-ex4_df_dt$cName <- as.factor(ex4_df_dt$cName)
+# ex4_df <- merge_ex_csvs(ex4_path)
+# ex4_df_dt <- process_time(ex4_df)
+# ex4_lookupTable <- createNamesTable(ex4_df_dt)
+# ex4_df_dt$cName <- ex4_lookupTable$cName[match(ex4_df_dt$deployment, ex4_lookupTable$deployment)]
+# ex4_df_dt$cName <- as.factor(ex4_df_dt$cName)
+
+# #process production test 1
+# pt1_df <- merge_ex_csvs(pt1_path)
+# pt1_df_dt <- process_time(pt1_df)
+# pt1_lookupTable <- createNamesTable(pt1_df_dt)
+# pt1_df_dt$cName <- pt1_lookupTable$cName[match(pt1_df_dt$deployment, pt1_lookupTable$deployment)]
+# pt1_df_dt$cName <- as.factor(pt1_df_dt$cName)
+# 
+# #process production test 2 - plastidip1
+# pt2_df <- merge_ex_csvs(pt2_path)
+# pt2_df_dt <- process_time(pt2_df)
+# pt2_df_dt$logger <- as.factor(pt2_df_dt$logger)
+# # pt2_lookupTable <- createNamesTable(pt2_df_dt)
+# # pt2_df_dt$cName <- pt1_lookupTable$cName[match(pt2_df_dt$deployment, pt2_lookupTable$deployment)]
+# # pt2_df_dt$cName <- as.factor(pt2_df_dt$cName)
+
+#process production test 3 - plastidip2
+pt3_df <- merge_ex_csvs(pt3_path)
+pt3_df_dt <- process_time(pt3_df)
+pt3_df_dt$logger <- as.factor(pt3_df_dt$logger)
 
 # QC data
-ex1_df_dt_QC <- writeQC(ex1_df_dt, ex1_qc_dest)
-ex2_df_dt_QC <- writeQC(ex2_df_dt, ex2_qc_dest)
-ex3_df_dt_QC <- writeQC(ex3_df_dt, ex3_qc_dest)
-ex4_df_dt_QC <- writeQC(ex4_df_dt, ex4_qc_dest)
-
-
+# ex1_df_dt_QC <- writeQC(ex1_df_dt, ex1_qc_dest)
+# ex2_df_dt_QC <- writeQC(ex2_df_dt, ex2_qc_dest)
+# ex3_df_dt_QC <- writeQC(ex3_df_dt, ex3_qc_dest)
+# ex4_df_dt_QC <- writeQC(ex4_df_dt, ex4_qc_dest)
+# pt1_df_dt_QC <- writeQC(pt1_df_dt, pt1_qc_dest)
+# pt2_df_dt_QC <- writeQC2(pt2_df_dt, pt2_qc_dest)
+pt3_df_dt_QC <- writeQC2(pt3_df_dt, pt3_qc_dest)
 
 
 
@@ -452,118 +688,118 @@ ex4_df_dt_QC <- writeQC(ex4_df_dt, ex4_qc_dest)
 
 maxBinCount = 4096 # 0 - 4095
 inputVoltage = 5 #volts
-ex3_df_dt_QC$ch4rf_mV <- round( ex3_df_dt_QC$ch4rf_raw / maxBinCount * inputVoltage * 1000, 0)
-ex3_df_dt_QC$ch4_mV <- round( ex3_df_dt_QC$ch4_raw / maxBinCount * inputVoltage * 1000, 0)
-
-ex4_df_dt_QC$ch4rf_mV <- round( ex4_df_dt_QC$ch4rf_raw / maxBinCount * inputVoltage * 1000, 0)
-ex4_df_dt_QC$ch4_mV <- round( ex4_df_dt_QC$ch4_raw / maxBinCount * inputVoltage * 1000, 0)
-
-# # ex3_df_dt_QC$ch4 <- #{equation to convert both voltage values to one methane reading?}
+# ex3_df_dt_QC$ch4rf_mV <- round( ex3_df_dt_QC$ch4rf_raw / maxBinCount * inputVoltage * 1000, 0)
+# ex3_df_dt_QC$ch4_mV <- round( ex3_df_dt_QC$ch4_raw / maxBinCount * inputVoltage * 1000, 0)
 # 
-ex3_resample <- summarise( group_by(ex3_df_dt_QC, cName, sec), ch4_mV = round( mean(ch4_mV), 0 ) )
-ex3_resample$dtp <- as.POSIXct(ex3_resample$sec, tz='gmt', origin='1970-01-01 00:00:00')
-
-ex4_resample <- summarise( group_by(ex4_df_dt_QC, cName, sec), ch4_mV = round( mean(ch4_mV), 0 ) )
-ex4_resample$dtp <- as.POSIXct(ex4_resample$sec, tz='gmt', origin='1970-01-01 00:00:00')
-
+# ex4_df_dt_QC$ch4rf_mV <- round( ex4_df_dt_QC$ch4rf_raw / maxBinCount * inputVoltage * 1000, 0)
+# ex4_df_dt_QC$ch4_mV <- round( ex4_df_dt_QC$ch4_raw / maxBinCount * inputVoltage * 1000, 0)
 # 
-# ex3_resample_subset <- ex3_resample[ which(ex3_resample$cName != 'WaterBear-3') ,] #remove waterbear-3
+# # # ex3_df_dt_QC$ch4 <- #{equation to convert both voltage values to one methane reading?}
+# # 
+# ex3_resample <- summarise( group_by(ex3_df_dt_QC, cName, sec), ch4_mV = round( mean(ch4_mV), 0 ) )
+# ex3_resample$dtp <- as.POSIXct(ex3_resample$sec, tz='gmt', origin='1970-01-01 00:00:00')
 # 
+# ex4_resample <- summarise( group_by(ex4_df_dt_QC, cName, sec), ch4_mV = round( mean(ch4_mV), 0 ) )
+# ex4_resample$dtp <- as.POSIXct(ex4_resample$sec, tz='gmt', origin='1970-01-01 00:00:00')
 # 
-ex3_resample_subset$hour<-hour(ex3_resample_subset$dtp) # extract hours
-ex3_resample_subset$date<-date(ex3_resample_subset$dtp) # extract dates
-
-ex4_resample$hour<-hour(ex4_resample$dtp) # extract hours
-ex4_resample$date<-date(ex4_resample$dtp) # extract dates
-
-ex4_r_hourdate <- unique(ex4_resample[,c('hour','date')])
-for(hour in ex4_r_hourdate[1]){
-  print(hour)
-}
-
-ex4_r_hr1 <-ex4_resample[which(ex4_resample$hour==19),]
-ex4_r_hr2 <-ex4_resample[which(ex4_resample$hour==20),]
-ex4_r_hr3 <-ex4_resample[which(ex4_resample$hour==21),]
-ex4_r_hr4 <-ex4_resample[which(ex4_resample$hour==22),]
-
-# scale_x_datetime(date_labels="%m/%d %H",breaks=scales::pretty_breaks(n=4),expand=c(0,60*120))
-# ex4_R_hr1 <- 
-ex4_hr1 <- ggplot(data=ex4_r_hr1, aes_string(x='dtp', color='cName', y='ch4_mV'))+
-  geom_point(size=5)+geom_line(size=3)+theme_classic(base_size = 18)+
-  theme(text=element_text(family='Droid Serif'),axis.line=element_line(colour='black', size = 2), axis.ticks=element_line(colour = "black", size = 2))+
-  labs(x='Time (hr:min)', y='Methane Reading (mV)', color=NULL)+
-  scale_color_manual(values=custom_colors2,na.translate=F)+theme(legend.position='bottom', legend.box.spacing=unit(0,'cm'))+
-  scale_x_datetime(expand=c(0,90))+
-  scale_y_continuous(limits=c(50,950))+
-  geom_vline(xintercept=as.numeric(ex4_r_hr1$dtp[11]), linetype='dashed', size=2, color='#7000CC', alpha=0.75)+
-  geom_vline(xintercept=as.numeric(ex4_r_hr1$dtp[8]), linetype='dashed', size=2, color='#E22C7B', alpha=0.75)+
-  geom_vline(xintercept=as.numeric(ex4_r_hr1$dtp[13]), linetype='dashed', size=2, color='#FFAF2A', alpha=0.75)+
-  geom_vline(xintercept=as.numeric(ex4_r_hr1$dtp[14]), linetype='dashed', size=2, color='#00AAAA', alpha=0.75)
-
-ex4_hr2 <- ggplot(data=ex4_r_hr2, aes_string(x='dtp', color='cName', y='ch4_mV'))+
-  geom_point(size=5)+geom_line(size=3)+theme_classic(base_size = 18)+
-  theme(text=element_text(family='Droid Serif'),axis.line=element_line(colour = 'black', size = 2), axis.ticks=element_line(colour = "black", size = 2))+
-  labs(x='Time (hr:min)', y='Methane Reading (mV)', color=NULL)+
-  scale_color_manual(values=custom_colors2,na.translate=F)+theme(legend.position = 'bottom', legend.box.spacing = unit(0,'cm'))+
-  scale_x_datetime(expand=c(0,90))+
-  scale_y_continuous(limits=c(50,950))+
-  geom_vline(xintercept=as.numeric(ex4_r_hr2$dtp[7]), linetype='dashed', size=2)
-
-ex4_hr3 <- ggplot(data=ex4_r_hr3, aes_string(x='dtp', color='cName', y='ch4_mV'))+
-  geom_point(size=5)+geom_line(size=3)+theme_classic(base_size = 18)+
-  theme(text=element_text(family='Droid Serif'),axis.line=element_line(colour = 'black', size = 2), axis.ticks=element_line(colour = "black", size = 2))+
-  labs(x='Time (hr:min)', y=NULL, color=NULL)+
-  scale_color_manual(values=custom_colors2,na.translate=F)+theme(legend.position = 'bottom', legend.box.spacing = unit(0,'cm'))+
-  scale_x_datetime(expand=c(0,90))+
-  scale_y_continuous(limits=c(50,950))+
-  geom_vline(xintercept=as.numeric(ex4_r_hr3$dtp[24]), linetype='dashed', size=2, color='#7000CC', alpha=0.75)+
-  geom_vline(xintercept=as.numeric(ex4_r_hr3$dtp[8]), linetype='dashed', size=2, color='#E22C7B', alpha=0.75)+
-  geom_vline(xintercept=as.numeric(ex4_r_hr3$dtp[21]), linetype='dashed', size=2, color='#FFAF2A', alpha=0.75)+
-  geom_vline(xintercept=as.numeric(ex4_r_hr3$dtp[7]), linetype='dashed', size=2, color='#00AAAA', alpha=0.75)
-
-ex4_hr4 <- ggplot(data=ex4_r_hr4, aes_string(x='dtp', color='cName', y='ch4_mV'))+
-  geom_point(size=5)+geom_line(size=3)+theme_classic(base_size = 18)+
-  theme(text=element_text(family='Droid Serif'),axis.line=element_line(colour = 'black', size = 2), axis.ticks=element_line(colour = "black", size = 2))+
-  labs(x='Time (hr:min)', y='Methane Reading (mV)', color=NULL)+
-  scale_color_manual(values=custom_colors2,na.translate=F)+theme(legend.position = 'bottom', legend.box.spacing = unit(0,'cm'))+
-  scale_x_datetime(expand=c(0,90))+
-  scale_y_continuous(limits=c(50,950))+
-  geom_vline(xintercept=as.numeric(ex4_r_hr4$dtp[20]), linetype='dashed', size=1.5, color='#00AAAA', alpha=0.5)
-
-# custom_colors2=c('#7000CC','#E22C7B','#FFAF2A','#00AAAA') #00CACA
-
-p <- ggarrange(ex4_hr1, ex4_hr3, common.legend=TRUE, align='hv', labels=c('A','B'), font.label=list(size=18, family='Droid Serif'), hjust=-2)
-# p_ann <- annotate_figure(p, left=textGrob('Methane Reading (mV)', rot=90, vjust=0.5, gp=gpar(fontsize=18)))
-# p_ann_font <- font(p_ann, family='times new roman')
-# p_ann + theme(text=element_text(family='Verdana'))
+# # 
+# # ex3_resample_subset <- ex3_resample[ which(ex3_resample$cName != 'WaterBear-3') ,] #remove waterbear-3
+# # 
+# # 
+# ex3_resample_subset$hour<-hour(ex3_resample_subset$dtp) # extract hours
+# ex3_resample_subset$date<-date(ex3_resample_subset$dtp) # extract dates
+# 
+# ex4_resample$hour<-hour(ex4_resample$dtp) # extract hours
+# ex4_resample$date<-date(ex4_resample$dtp) # extract dates
+# 
+# ex4_r_hourdate <- unique(ex4_resample[,c('hour','date')])
+# for(hour in ex4_r_hourdate[1]){
+#   print(hour)
+# }
+# 
+# ex4_r_hr1 <-ex4_resample[which(ex4_resample$hour==19),]
+# ex4_r_hr2 <-ex4_resample[which(ex4_resample$hour==20),]
+# ex4_r_hr3 <-ex4_resample[which(ex4_resample$hour==21),]
+# ex4_r_hr4 <-ex4_resample[which(ex4_resample$hour==22),]
+# 
+# # scale_x_datetime(date_labels="%m/%d %H",breaks=scales::pretty_breaks(n=4),expand=c(0,60*120))
+# # ex4_R_hr1 <- 
+# ex4_hr1 <- ggplot(data=ex4_r_hr1, aes_string(x='dtp', color='cName', y='ch4_mV'))+
+#   geom_point(size=5)+geom_line(size=3)+theme_classic(base_size = 18)+
+#   theme(text=element_text(family='Droid Serif'),axis.line=element_line(colour='black', size = 2), axis.ticks=element_line(colour = "black", size = 2))+
+#   labs(x='Time (hr:min)', y='Methane Reading (mV)', color=NULL)+
+#   scale_color_manual(values=custom_colors2,na.translate=F)+theme(legend.position='bottom', legend.box.spacing=unit(0,'cm'))+
+#   scale_x_datetime(expand=c(0,90))+
+#   scale_y_continuous(limits=c(50,950))+
+#   geom_vline(xintercept=as.numeric(ex4_r_hr1$dtp[11]), linetype='dashed', size=2, color='#7000CC', alpha=0.75)+
+#   geom_vline(xintercept=as.numeric(ex4_r_hr1$dtp[8]), linetype='dashed', size=2, color='#E22C7B', alpha=0.75)+
+#   geom_vline(xintercept=as.numeric(ex4_r_hr1$dtp[13]), linetype='dashed', size=2, color='#FFAF2A', alpha=0.75)+
+#   geom_vline(xintercept=as.numeric(ex4_r_hr1$dtp[14]), linetype='dashed', size=2, color='#00AAAA', alpha=0.75)
+# 
+# ex4_hr2 <- ggplot(data=ex4_r_hr2, aes_string(x='dtp', color='cName', y='ch4_mV'))+
+#   geom_point(size=5)+geom_line(size=3)+theme_classic(base_size = 18)+
+#   theme(text=element_text(family='Droid Serif'),axis.line=element_line(colour = 'black', size = 2), axis.ticks=element_line(colour = "black", size = 2))+
+#   labs(x='Time (hr:min)', y='Methane Reading (mV)', color=NULL)+
+#   scale_color_manual(values=custom_colors2,na.translate=F)+theme(legend.position = 'bottom', legend.box.spacing = unit(0,'cm'))+
+#   scale_x_datetime(expand=c(0,90))+
+#   scale_y_continuous(limits=c(50,950))+
+#   geom_vline(xintercept=as.numeric(ex4_r_hr2$dtp[7]), linetype='dashed', size=2)
+# 
+# ex4_hr3 <- ggplot(data=ex4_r_hr3, aes_string(x='dtp', color='cName', y='ch4_mV'))+
+#   geom_point(size=5)+geom_line(size=3)+theme_classic(base_size = 18)+
+#   theme(text=element_text(family='Droid Serif'),axis.line=element_line(colour = 'black', size = 2), axis.ticks=element_line(colour = "black", size = 2))+
+#   labs(x='Time (hr:min)', y=NULL, color=NULL)+
+#   scale_color_manual(values=custom_colors2,na.translate=F)+theme(legend.position = 'bottom', legend.box.spacing = unit(0,'cm'))+
+#   scale_x_datetime(expand=c(0,90))+
+#   scale_y_continuous(limits=c(50,950))+
+#   geom_vline(xintercept=as.numeric(ex4_r_hr3$dtp[24]), linetype='dashed', size=2, color='#7000CC', alpha=0.75)+
+#   geom_vline(xintercept=as.numeric(ex4_r_hr3$dtp[8]), linetype='dashed', size=2, color='#E22C7B', alpha=0.75)+
+#   geom_vline(xintercept=as.numeric(ex4_r_hr3$dtp[21]), linetype='dashed', size=2, color='#FFAF2A', alpha=0.75)+
+#   geom_vline(xintercept=as.numeric(ex4_r_hr3$dtp[7]), linetype='dashed', size=2, color='#00AAAA', alpha=0.75)
+# 
+# ex4_hr4 <- ggplot(data=ex4_r_hr4, aes_string(x='dtp', color='cName', y='ch4_mV'))+
+#   geom_point(size=5)+geom_line(size=3)+theme_classic(base_size = 18)+
+#   theme(text=element_text(family='Droid Serif'),axis.line=element_line(colour = 'black', size = 2), axis.ticks=element_line(colour = "black", size = 2))+
+#   labs(x='Time (hr:min)', y='Methane Reading (mV)', color=NULL)+
+#   scale_color_manual(values=custom_colors2,na.translate=F)+theme(legend.position = 'bottom', legend.box.spacing = unit(0,'cm'))+
+#   scale_x_datetime(expand=c(0,90))+
+#   scale_y_continuous(limits=c(50,950))+
+#   geom_vline(xintercept=as.numeric(ex4_r_hr4$dtp[20]), linetype='dashed', size=1.5, color='#00AAAA', alpha=0.5)
+# 
+# # custom_colors2=c('#7000CC','#E22C7B','#FFAF2A','#00AAAA') #00CACA
+# 
+# p <- ggarrange(ex4_hr1, ex4_hr3, common.legend=TRUE, align='hv', labels=c('A','B'), font.label=list(size=18, family='Droid Serif'), hjust=-2)
+# # p_ann <- annotate_figure(p, left=textGrob('Methane Reading (mV)', rot=90, vjust=0.5, gp=gpar(fontsize=18)))
+# # p_ann_font <- font(p_ann, family='times new roman')
+# # p_ann + theme(text=element_text(family='Verdana'))
+# # print(p)
+# 
+# png(file=paste(sep='',ex4_output_dir,'ex4_arr_hr1_3.png'),width=12,height=8,units="in",res=300) # 150/300?
 # print(p)
-
-png(file=paste(sep='',ex4_output_dir,'ex4_arr_hr1_3.png'),width=12,height=8,units="in",res=300) # 150/300?
-print(p)
-dev.off()
-
-
-##### note to self: ggarrange ALL (except battery) of the plots together, annotate each row / shared y axis for each row
-ggarrPlots[[ column[i] ]] <- ggarrange(ncol=3, plotlist=valuePlots[[ column[i] ]], common.legend=TRUE, align='hv', labels=c('A','B','C'), hjust=-1) #
-ggarrPlots[[ column[i] ]] <- annotate_figure( ggarrPlots[[ column[i] ]],
-                                              left=textGrob(ylabs[i], rot=90, vjust=0.5, gp=gpar(fontsize=14)),
-                                              bottom=textGrob('Time', vjust=-0.25, gp=gpar(fontsize=14)))
-
-png(file=paste(sep='',ex4_output_dir,'ex4_hr1.png'),width=10,height=8,units="in",res=150) # 150/300?
-print(ex4_hr1)
-dev.off()
-
-png(file=paste(sep='',ex4_output_dir,'ex4_hr2.png'),width=10,height=8,units="in",res=150) # 150/300?
-print(ex4_hr2)
-dev.off()
-
-png(file=paste(sep='',ex4_output_dir,'ex4_hr3.png'),width=10,height=8,units="in",res=150) # 150/300?
-print(ex4_hr3)
-dev.off()
-
-png(file=paste(sep='',ex4_output_dir,'ex4_hr4.png'),width=10,height=8,units="in",res=150) # 150/300?
-print(ex4_hr4)
-dev.off()
+# dev.off()
+# 
+# 
+# ##### note to self: ggarrange ALL (except battery) of the plots together, annotate each row / shared y axis for each row
+# ggarrPlots[[ column[i] ]] <- ggarrange(ncol=3, plotlist=valuePlots[[ column[i] ]], common.legend=TRUE, align='hv', labels=c('A','B','C'), hjust=-1) #
+# ggarrPlots[[ column[i] ]] <- annotate_figure( ggarrPlots[[ column[i] ]],
+#                                               left=textGrob(ylabs[i], rot=90, vjust=0.5, gp=gpar(fontsize=14)),
+#                                               bottom=textGrob('Time', vjust=-0.25, gp=gpar(fontsize=14)))
+# 
+# png(file=paste(sep='',ex4_output_dir,'ex4_hr1.png'),width=10,height=8,units="in",res=150) # 150/300?
+# print(ex4_hr1)
+# dev.off()
+# 
+# png(file=paste(sep='',ex4_output_dir,'ex4_hr2.png'),width=10,height=8,units="in",res=150) # 150/300?
+# print(ex4_hr2)
+# dev.off()
+# 
+# png(file=paste(sep='',ex4_output_dir,'ex4_hr3.png'),width=10,height=8,units="in",res=150) # 150/300?
+# print(ex4_hr3)
+# dev.off()
+# 
+# png(file=paste(sep='',ex4_output_dir,'ex4_hr4.png'),width=10,height=8,units="in",res=150) # 150/300?
+# print(ex4_hr4)
+# dev.off()
 
 
 # 
@@ -588,6 +824,12 @@ dev.off()
 # writeMetrics(ex1_df_dt_QC, ex1_metadata_dest)
 # writeMetrics(ex2_df_dt_QC, ex2_metadata_dest)
 # writeMetrics(ex3_df_dt_QC, ex3_metadata_dest)
+
+# writeMetrics(pt1_df_dt_QC, pt1_metadata_dest)
+# writeMetrics2(pt2_df_dt_QC, pt2_metadata_dest)
+writeMetrics2(pt3_df_dt_QC, pt3_metadata_dest)
+
+
 # 
 # ##### Manual SUBSET DFs to remove WaterBear-3 for erroneous data #####
 # ex1_df_dt_QC_subset <- ex1_df_dt_QC[ which(ex1_df_dt_QC$cName != 'WaterBear-3') ,]
@@ -598,11 +840,18 @@ dev.off()
 # ex1_clip_df_list <- clipData(ex1_df_dt_QC_subset)
 # ex2_clip_df_list <- clipData(ex2_df_dt_QC_subset)
 # ex3_clip_df_list <- clipData(ex3_df_dt_QC_subset)
+# pt2_clip_df_list <- clipData2(pt2_df_dt_QC)
+pt3_clip_df_list <- clipData2(pt3_df_dt_QC)
+
+
 # 
 # ### resample each dataframe clip based on 10 readings / second ###
 # ex1_resample_df_list <- resample_df_list(ex1_clip_df_list)
 # ex2_resample_df_list <- resample_df_list(ex2_clip_df_list)
 # ex3_resample_df_list <- resample_df_list(ex3_clip_df_list)
+# pt2_resample_df_list <- resample_df_list2(pt2_clip_df_list)
+pt3_resample_df_list <- resample_df_list2(pt3_clip_df_list)
+
 # 
 # 
 # ### create plots ###
@@ -623,61 +872,79 @@ dev.off()
 # ex3_deployment_plots <- plot_Sonde_v_Time(ex3_df_dt_QC)
 # ex3_clip_ggarr <- plot_arr_df_list(ex3_clip_df_list)
 # ex3_resample_ggarr <- plot_arr_df_list(ex3_resample_df_list)
+
+# #production test 2 -plastidip lists
+# pt2_individual_plots <- plot_Y_v_Time2(pt2_df_dt_QC)
+# pt2_deployment_plots <- plot_Logger_v_Time(pt2_df_dt_QC)
+# pt2_clip_ggarr <- plot_arr_df_list2(pt2_clip_df_list)
+# pt2_resample_ggarr <- plot_arr_df_list2(pt2_resample_df_list)
+
+#production test 2 -plastidip lists
+pt3_individual_plots <- plot_Y_v_Time2(pt3_df_dt_QC)
+pt3_deployment_plots <- plot_Logger_v_Time(pt3_df_dt_QC)
+pt3_clip_ggarr <- plot_arr_df_list2(pt3_clip_df_list)
+pt3_resample_ggarr <- plot_arr_df_list2(pt3_resample_df_list)
+
 # 
 # 
-# ### write plots to pdf ###
-# #open PDF
-# writePDF <- function(ex_ip, ex_dp, ex_r, path){
-#   cleanFile(path)
-# 
-#   pdf(file=path, onefile=TRUE)
-#   for (plots in ex_ip){
-#     individualGrid <- ggarrange(plotlist=plots, ncol=2, nrow=2, common.legend=TRUE, align='v')
-#     print(individualGrid)
-#   }
-#   deploymentGrid <- ggarrange(plotlist=ex_dp, ncol=2, nrow=3, common.legend=TRUE, align='v')
-#   print(deploymentGrid)
-#   print(ex_r)
-# 
-#   dev.off()
-# }
+### write plots to pdf ###
+#open PDF
+writePDF <- function(ex_ip, ex_dp, ex_r, path){
+  cleanFile(path)
+
+  pdf(file=path, onefile=TRUE)
+  for (plots in ex_ip){
+    individualGrid <- ggarrange(plotlist=plots, ncol=2, nrow=2, common.legend=TRUE, align='v')
+    print(individualGrid)
+  }
+  deploymentGrid <- ggarrange(plotlist=ex_dp, ncol=2, nrow=3, common.legend=TRUE, align='v')
+  print(deploymentGrid)
+  print(ex_r)
+
+  dev.off()
+}
 # 
 # writePDF(ex1_individual_plots, ex1_deployment_plots, ex1_resample_ggarr, ex1_pdf_dest)
 # writePDF(ex2_individual_plots, ex2_deployment_plots, ex2_resample_ggarr, ex2_pdf_dest)
 # writePDF(ex3_individual_plots, ex3_deployment_plots, ex3_resample_ggarr, ex3_pdf_dest)
+# writePDF(pt2_individual_plots, pt2_deployment_plots, pt2_resample_ggarr, pt2_pdf_dest)
+writePDF(pt3_individual_plots, pt3_deployment_plots, pt3_resample_ggarr, pt3_pdf_dest)
+
 # 
-# ### save ggarranged plots as individual images ###
-# savePlots <- function(ex_ip, ex_dp, ex_r, path){
-#   i = 1
-#   for(plot in ex_ip){
-#     pngPath = paste(sep="",path,"/","raw_",column[i],".png")
-#     individualGrid <- ggarrange(plotlist=plot, ncol=2, nrow=2, common.legend=TRUE, align='hv')
-#     png(file=pngPath,width=595,height=595)
-#     # png(file=pngPath,width=6,height=6,units="in",res=150)
-#     print(individualGrid)
-#     dev.off()
-#     i = i + 1
-#   }
-#   
-#   pngPath = paste(sep="",path,"/raw_experiment.png")
-#   deploymentGrid <- ggarrange(plotlist=ex_dp, ncol=2, nrow=3, common.legend=TRUE, align='hv')
-#   png(file=pngPath,width=595,height=842) # A4 paper dimensions at 72 DPI
-#   # png(file=pngPath,width=2480,height=3508) # A4 paper dimensions at 300 DPI
-#   print(deploymentGrid)
-#   dev.off()
-#   
-#   i = 1
-#   for(plot in ex_r){
-#     pngPath = paste(sep="",path,"/","resample_",column[i],".png")
-#     # png(file=pngPath,width=595,height=842)
-#     # png(file=pngPath,width=842,height=595)
-#     png(file=pngPath,width=8,height=5,units="in",res=150) # 150/300?
-#     print(plot)
-#     dev.off()
-#     i = i + 1
-#   }
-# }
+### save ggarranged plots as individual images ###
+savePlots <- function(ex_ip, ex_dp, ex_r, path){
+  i = 1
+  for(plot in ex_ip){
+    pngPath = paste(sep="",path,"/","raw_",column[i],".png")
+    individualGrid <- ggarrange(plotlist=plot, ncol=2, nrow=2, common.legend=TRUE, align='hv')
+    png(file=pngPath,width=595,height=595)
+    # png(file=pngPath,width=6,height=6,units="in",res=150)
+    print(individualGrid)
+    dev.off()
+    i = i + 1
+  }
+
+  pngPath = paste(sep="",path,"/raw_experiment.png")
+  deploymentGrid <- ggarrange(plotlist=ex_dp, ncol=2, nrow=3, common.legend=TRUE, align='hv')
+  png(file=pngPath,width=595,height=842) # A4 paper dimensions at 72 DPI
+  # png(file=pngPath,width=2480,height=3508) # A4 paper dimensions at 300 DPI
+  print(deploymentGrid)
+  dev.off()
+
+  i = 1
+  for(plot in ex_r){
+    pngPath = paste(sep="",path,"/","resample_",column[i],".png")
+    # png(file=pngPath,width=595,height=842)
+    # png(file=pngPath,width=842,height=595)
+    png(file=pngPath,width=8,height=5,units="in",res=150) # 150/300?
+    print(plot)
+    dev.off()
+    i = i + 1
+  }
+}
 # 
 # savePlots(ex1_individual_plots, ex1_deployment_plots, ex1_resample_ggarr, ex1_output_dir)
 # savePlots(ex2_individual_plots, ex2_deployment_plots, ex2_resample_ggarr, ex2_output_dir)
 # savePlots(ex3_individual_plots, ex3_deployment_plots, ex3_resample_ggarr, ex3_output_dir)
+# savePlots(pt2_individual_plots, pt2_deployment_plots, pt2_resample_ggarr, pt2_output_dir)
+savePlots(pt3_individual_plots, pt3_deployment_plots, pt3_resample_ggarr, pt3_output_dir)

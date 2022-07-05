@@ -15,6 +15,9 @@ library(ggplot2) # plotting package
 library(ggpubr) # ggarrange
 # library(grid) # textGrob
 
+library(caTools)
+library(reshape2)
+
 ### garbage collection lines ###
 rm(list = ls()) # clear R working memory
 graphics.off() # close any open plots
@@ -30,7 +33,9 @@ options('digits'=15) # default is 7, increasing to show full precision of number
 # path to folder with main data folders in it
 # ! THIS IS THE ONLY THING THAT NEEDS TO BE CHANGED IF ALL DATAFOLDERS ARE THERE ! #
 # wd = "~/Desktop/data/productionTests" #linux path
-wd = "~/Desktop/data/productionTests" #linux path #HARDCODED
+# wd = "~/Desktop/data/productionTests" #linux path #HARDCODED
+wd = "/Documents/GitHub/data/" #windows path #HARDCODED
+
 
 # specific experiment folder to process
 pt2 = "plastidipTest2" #HARDCODED
@@ -86,6 +91,61 @@ merge_ex_csvs <- function(exDir){
     }
   }
   return(compiled_data)
+}
+
+#### jake's code ####
+cd <- merge_ex_csvs(paste(sep="", wd, pt2))
+
+raw_bin_21008<-subset(cd,logger=="21008")
+
+## used to make hourly groups
+raw_bin_21008$dtp<-as.POSIXct(raw_bin_21008$time.s, origin="1970-01-01")
+raw_bin_21008$time.s_lag1<-lag(raw_bin_21008$time.s,1)
+raw_bin_21008$time_diff<-raw_bin_21008$time.s-raw_bin_21008$time.s_lag1
+raw_bin_21008$group<-1
+group_count<-1
+for(i in 2:nrow(raw_bin_21008)){
+  if(raw_bin_21008$time_diff[i]>100){
+    group_count<-group_count+1
+    raw_bin_21008$group[i:nrow(raw_bin_21008)]<-group_count
+  }
+}
+
+#subset raw data type
+raw_bin_21008<-subset(raw_bin_21008,type=="raw")
+
+#test plot
+ggplot(raw_bin_21008,aes(dtp,ch4_raw))+
+  geom_point(size=2,aes(color=group))
+
+# generate a basic plot, and then a plot showing the running mean, standard deviation, and correlation of variance
+report<-data.frame()
+for(j in 1:max(raw_bin_21008$group)){
+  group_sub<-subset(raw_bin_21008,group==j)
+  gg<-ggplot(group_sub,aes(time.s,ch4_raw))+
+    geom_point(size=2)
+  # +scale_x_datetime(date_labels="%H:%M",breaks=scales::pretty_breaks(n=4),expand=c(0,60*1.5))
+  
+  print(gg)
+  
+  group_sub$runmean = runmean(group_sub$ch4_raw, 10, endrule="mean")
+  group_sub$runsd = runsd(group_sub$ch4_raw, 10, endrule="sd")
+  group_sub$runcv<-group_sub$runsd/group_sub$runmean
+  
+  invisible(readline(prompt="Press [enter] to continue"))
+  
+  gsmelt<-melt(group_sub[,c("time.s","runmean","runsd","runcv","ch4_raw")],id.vars=c("time.s"))
+  meltplot<-ggplot(gsmelt,aes(time.s,value))+
+    geom_point(size=2,aes(color=variable))+
+    facet_wrap(.~variable,scales="free_y",ncol=1)
+  
+  print(meltplot)
+  
+  
+  temp_report<-data.frame(group=j,min_cv=min(group_sub$runcv),min_sd=min(group_sub$runsd),first_cv_below_005=min(which(group_sub$runcv<0.005)))
+  report<-bind_rows(report,temp_report)
+  invisible(readline(prompt="Press [enter] to continue"))
+  
 }
 
 #convert time.s to datetime column, split into hour and date, create a new hourly factor, change other columns to factors

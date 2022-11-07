@@ -113,9 +113,10 @@ process_columns <- function(compiled_data){
 
 cd<-merge_ex_csvs("/Volumes/GoogleDrive-116069313024281609105/My Drive/USDA Wetlands/Data/Raw_Sensor_Data/WaterBear_MethaneTemperatureRelativeHumidity/plastidipTest2/")
 
-
+#subset one deployment
 raw_bin_21008<-subset(cd,deployed_at=="1656006172")
 
+#process time stamp, and group by single bursts (100 seconds)
 raw_bin_21008$dtp<-as.POSIXct(raw_bin_21008$time.s, origin="1970-01-01")
 raw_bin_21008$time.s_lag1<-lag(raw_bin_21008$time.s,1)
 raw_bin_21008$time_diff<-raw_bin_21008$time.s-raw_bin_21008$time.s_lag1
@@ -128,33 +129,43 @@ for(i in 2:nrow(raw_bin_21008)){
 	}
 }
 
-ggplot(raw_bin_21008,aes(dtp,ch4_raw))+
-geom_point(size=2,aes(color=group))
+# initial basic plot
+ggplot(raw_bin_21008,aes(dtp,ch4_raw))+geom_point(size=2,aes(color=group))
 
+# subset raw data type
 raw_bin_21008<-subset(raw_bin_21008,type=="raw")
 
+#dataframe to hold final plots
 report<-data.frame()
+
+#iterate through each group (burst)
 for(j in 1:max(raw_bin_21008$group)){
-	group_sub<-subset(raw_bin_21008,group==j)
-	gg<-ggplot(group_sub,aes(time.s,ch4_raw))+
-	geom_point(size=2)
+	#subset dataframe by group
+  group_sub<-subset(raw_bin_21008,group==j)
+	
+  # initial plot and display
+  gg<-ggplot(group_sub,aes(time.s,ch4_raw))+geom_point(size=2)
 	print(gg)
+
+	invisible(readline(prompt="Press [enter] to continue"))
+
+	#calculate running mean, standard deviation, and coefficient of variance into new columns
 	group_sub$runmean = runmean(group_sub$ch4_raw, 10, endrule="mean")
 	group_sub$runsd = runsd(group_sub$ch4_raw, 10, endrule="sd")
 	group_sub$runcv<-group_sub$runsd/group_sub$runmean
-	
-	invisible(readline(prompt="Press [enter] to continue"))
-	
+
+	#reorganize data into long format, based on time.s as unique identities (time.s is raw time unix and should have milliseconds)
 	gsmelt<-melt(group_sub[,c("time.s","runmean","runsd","runcv","ch4_raw")],id.vars=c("time.s"))
-	meltplot<-ggplot(gsmelt,aes(time.s,value))+
-	geom_point(size=2,aes(color=variable))+
-	facet_wrap(.~variable,scales="free_y",ncol=1)
 	
+	# create plots vs time for running mean, standard deviation, and correlation of variance vs time.s, then display
+	meltplot<-ggplot(gsmelt,aes(time.s,value))+	geom_point(size=2,aes(color=variable))+
+	  facet_wrap(.~variable,scales="free_y",ncol=1)
 	print(meltplot)
-		
-		
+
+	#add data to output dataframe
 	temp_report<-data.frame(group=j,min_cv=min(group_sub$runcv),min_sd=min(group_sub$runsd),first_cv_below_005=min(which(group_sub$runcv<0.005)))
 	report<-bind_rows(report,temp_report)
+
 	invisible(readline(prompt="Press [enter] to continue"))
 	
 }

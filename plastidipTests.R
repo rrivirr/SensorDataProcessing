@@ -1,10 +1,10 @@
 # exADC_CH4DHT22.R created Jun 27, 2022 by Ken Chong
-# Last edit: Jul 1, 2022 by Ken Chong
+# Last edit: Jul 15, 2022 by Ken Chong
 #
 # Code to process WaterBear data containing output from one Figaro NGM2611-E13 methane sensor,
 # and one Adafruit DHT22 temperature and relative humidity sensor
 #
-# note: battery.V may be irrelevant due to some components on rail being removed on board
+# note: battery.V is irrelevant currently as it is not wired correctly
 #
 # note to self: ctrl+shift+c to comment toggle line(s)
 
@@ -13,6 +13,8 @@ library(dplyr) # bind, relocate
 library(lubridate) # as_datetime, hour, date
 library(ggplot2) # plotting package
 library(ggpubr) # ggarrange
+library(caTools)
+library(reshape2)
 # library(grid) # textGrob
 
 ### garbage collection lines ###
@@ -95,9 +97,15 @@ process_columns <- function(compiled_data){
   compiled_data$hour<-hour(compiled_data$datetime) # extract hours
   compiled_data$minute<-minute(compiled_data$datetime) # extract minutes
   compiled_data$second<-round(compiled_data$time.s, 0) # round off epoch to remove milliseconds (used for resampling later)
+  
+  # if using external ADC for battery value
+  adcReference = 5.4 * 1000 #5.4V * 1000mV/V
+  adcResolution = 4095 # 12bit adc
+  compiled_data$battery.mV<-compiled_data$battery.V*(adcReference/adcResolution)
 
   #reinterpret columns as factors
-  compiled_data$datehour<-as.factor(format.Date(compiled_data$datetime, format = "%Y-%m-%d %H"))
+  compiled_data$datehour<-as.factor(format.Date(compiled_data$datetime, format="%Y-%m-%d %H")) # measurement cycle
+  compiled_data$datehourmin<-as.factor(format.Date(compiled_data$datetime, format="%Y-%m-%d %H:%M")) # reading cycle
   compiled_data$type<-as.factor(compiled_data$type)
   compiled_data$site<-as.factor(compiled_data$site)
   compiled_data$logger <- as.factor(compiled_data$logger)
@@ -143,6 +151,7 @@ qualityControl <- function(df, path, filePrefix, loggers, colMetrics){
         wbSubset <- df[ which(df$logger == wb),]
         name <- paste(sep=".",col,step)
         qcSummary[wb,name] <- sum(is.nan(wbSubset[,col]))
+        qcSummary$logger <- wb #TODO, does this work?
       }
     }
     if(step == qcStep[1]){
@@ -152,7 +161,7 @@ qualityControl <- function(df, path, filePrefix, loggers, colMetrics){
       # perform next QC process, currently there is none. #
     }
   }
-  qcSummary$logger <- loggers
+  # qcSummary$logger <- loggers #TODO, this is not lining up correctly, consider populating this column within loop
   qcSummary <- relocate(qcSummary, logger)
   write.table(qcSummary, file=path, row.names=FALSE, sep="\t")
   return(df)
@@ -252,6 +261,78 @@ savePlotList <-function(plotList, outputDir, tag="", width=800, height=800){
   }
 }
 
+######### TESTING running mean, sd, cv report #########
+# note, split into two functions, one to process data by the minute/reading cycle, for each logger, then one to create the melt plots
+
+# process each reading cycle per logger for the entire data set, this is assuming a reading cycle falls within a minute
+# TODO: change to group by every 10 raw readings instead or 11, including the summary reading [or, each unique summary reading represents a burst?]
+# would not account for lack of overlap or each logger
+# note: not resampled data
+processReadingCycles <- function(df, loggers, colsReport){
+  readingCycles <- unique(df['datehourmin'])
+  
+  outputCols <- data.frame()
+  report <- data.frame()
+  for(wb in loggers){
+    wb_sub <- df[ which(df$logger == wb),]
+    for(r in readingCycles){
+      rc_sub <- wb_sub[which(df$datehourmin == rc)]
+      
+      #calculate running mean, standard deviation, and coefficient of variance into new columns
+      k = length(rc_sub[1,])
+      rc_sub$runmean = runmean(rc_sub$ch4_raw, k, endrule="mean")
+      rc_sub$runsd = runsd(rc_sub$ch4_raw, k, endrule="sd")
+      rc_sub$runcv <- rc_sub$runsd/rc_sub$runmean
+      
+      #add minimum values to output report dataframe
+      temp_report<-data.frame(group=j,min_cv=min(group_sub$runcv),min_sd=min(group_sub$runsd),first_cv_below_005=min(which(group_sub$runcv<0.005)))
+      report<-bind_rows(report,temp_report)
+    }
+  }
+}
+
+# for(step in qcStep){
+#   for(wb in loggers){
+#     for(col in colMetrics){
+#       wbSubset <- df[ which(df$logger == wb),]
+#       name <- paste(sep=".",col,step)
+#       qcSummary[wb,name] <- sum(is.nan(wbSubset[,col]))
+#       qcSummary$logger <- wb #TODO, does this work?
+#     }
+#   }
+
+burstPlotList <- function(df, cols_report, outputDir, filePrefix=""){
+  # #dataframe to hold final plots
+  reportDF<-data.frame()
+
+  for(j in 1:max(raw_bin_21008$group)){
+  #subset dataframe by group
+  group_sub<-subset(raw_bin_21008,group==j)
+
+  #calculate running mean, standard deviation, and coefficient of variance into new columns
+  group_sub$runmean = runmean(group_sub$ch4_raw, 10, endrule="mean")
+  group_sub$runsd = runsd(group_sub$ch4_raw, 10, endrule="sd")
+  group_sub$runcv<-group_sub$runsd/group_sub$runmean
+
+  #reorganize data into long format, based on time.s as unique identities (time.s is raw time unix and should have milliseconds)
+  gsmelt<-melt(group_sub[,c("time.s","runmean","runsd","runcv","ch4_raw")],id.vars=c("time.s"))
+
+  # create plots vs time for running mean, standard deviation, and correlation of variance vs time.s, then display
+  meltplot<-ggplot(gsmelt,aes(time.s,value))+	geom_point(size=2,aes(color=variable))+
+    facet_wrap(.~variable,scales="free_y",ncol=1)
+  print(meltplot)
+
+  #add data to output dataframe
+  temp_report<-data.frame(group=j,min_cv=min(group_sub$runcv),min_sd=min(group_sub$runsd),first_cv_below_005=min(which(group_sub$runcv<0.005)))
+  reportDF<-bind_rows(report,temp_report)
+  }
+
+  returns <- list(meltPlotList, reportDF)
+  
+  return(returns)
+}
+
+
 ## HARCODED ##
 # user settings based on data from header
 # user provided columns and rounding
@@ -332,7 +413,7 @@ processData <- function(workingDir, experimentFolderName){
   df_raw_qc <- qualityControl(df_raw, outputDir_raw, "raw", loggers, cols_metrics)
   # df_summary_qc <- qualityControl(df_summary, outputDir_summary, "summary", loggers, cols_metrics)
 
-  # print("Writing metadata")
+  print("Writing metadata")
   # write preliminary metadata for the data
   writeMetrics(df_raw_qc, outputDir_raw, "raw", loggers, cols_metrics)
   # writeMetrics(df_summary_qc, outputDir_summary, "summary", loggers, cols_metrics)
@@ -382,7 +463,23 @@ pt2_df_raw_qc <- pt2_returns[[1]]
 pt2_hourlyPlotList_raw <- pt2_returns[[2]]
 # pt2_hourlyPlotList_summary <- pt2_returns[[4]]
 
-
+## for each logger, for each minute, calculate mean, sd, and cv (sd/mean)
+## note: group is each individual burst, this is for logger 21008
+# report<-data.frame()
+# for(j in 1:max(raw_bin_21008$group)){
+#   group_sub<-subset(raw_bin_21008,group==j)
+#   group_sub$runmean = runmean(group_sub$ch4_raw, 10, endrule="mean")
+#   group_sub$runsd = runsd(group_sub$ch4_raw, 10, endrule="sd")
+#   group_sub$runcv<-group_sub$runsd/group_sub$runmean
+#   
+#   gsmelt<-melt(group_sub[,c("time.s","runmean","runsd","runcv","ch4_raw")],id.vars=c("time.s"))
+#   meltplot<-ggplot(gsmelt,aes(time.s,value))+
+#     geom_point(size=2,aes(color=variable))+
+#     facet_wrap(.~variable,scales="free_y",ncol=1)
+#   
+#   temp_report<-data.frame(group=j,min_cv=min(group_sub$runcv),min_sd=min(group_sub$runsd),first_cv_below_005=min(which(group_sub$runcv<0.005)))
+#   report<-bind_rows(report,temp_report)
+# }
 
 ##### POST PROCESSING ##### HARDCODED
 

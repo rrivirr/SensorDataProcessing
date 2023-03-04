@@ -1,0 +1,21 @@
+
+Call:
+lm(formula = ch4_raw ~ dht_C * aH_gm3, data = subset)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-65.603  -2.209   0.861  18.229  48.722 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  506.1896    35.0513  14.441 2.23e-12 ***
+dht_C          0.7614     1.6902   0.450   0.6570    
+aH_gm3        77.7694    14.0619   5.530 1.73e-05 ***
+dht_C:aH_gm3  -1.7805     0.4915  -3.623   0.0016 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 40.87 on 21 degrees of freedom
+Multiple R-squared:  0.9586,	Adjusted R-squared:  0.9527 
+F-statistic: 162.2 on 3 and 21 DF,  p-value: 1.112e-14
+

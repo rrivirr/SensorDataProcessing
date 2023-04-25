@@ -45,34 +45,62 @@ newDir<-function(dirPath){
   }
 }
 
-#input list of plots, output directory, custom directory path or tag
-#output save each plot to output directory
+# write lines to a complete file path
+writeFile<-function(lines, filePath){
+    fd<-file(filePath)
+    writeLines(lines, fd)
+    close(fd)
+}
+
+#input: list of plots , output directory, custom directory path or tag
+    # class(plotList) should return 'list'
+    # class(plotList[[1]]) should return 'gg plot' or something equivalent
+#output: save each plot to output directory with individual names
 #800 is a little over 5" on my screen at 1920x1080
 savePlotList<-function(plotList, tag="", width=800, height=800, od=outputDir){
+    # check if od ends with /, add if not
+    if(substr(od, nchar(od), nchar(od)) != "/"){ od<-paste0(od,"/") }
+    
     plots<-names(plotList)
-    for(i in 1:length(plots)){
-        pngPath = paste(sep="", od, tag, plots[i], ".png")
-        png(file=pngPath, width=width, height=height)
-        print(plotList[[ plots[i] ]])
-        dev.off()
+    # check if plots have names or not, incorporate into file name or not
+    if(is.null(plots)){
+        for(i in 1:length(plotList)){
+            pngPath = paste0(od, tag, "_", i, ".png")
+            png(file=pngPath, width=width, height=height)
+            print(plotList[[ i ]])
+            dev.off()
+        }
+    } else {
+        for(i in 1:length(plots)){
+            pngPath = paste0(od, tag, "_", plots[i], ".png")
+            png(file=pngPath, width=width, height=height)
+            print(plotList[[ plots[i] ]])
+            dev.off()
+        }
     }
 }
 
 # Save a list of list of plots to an output directory
 savePlotListList<-function(pll, tag="", width=800, height=800, od=outputDir){
+    # check if od ends with /, add if not
+    if(substr(od, nchar(od), nchar(od)) != "/"){ od<-paste0(od,"/") }
+    
     for(i in 1:length(pll)){
-        savePlotList(pll[[i]], od, tag=paste(tag,names(pll[i]),"_",sep=""), width=width, height=height)
+        savePlotList(pll[[i]], od, tag=paste0(tag,"_",names(pll[i])), width=width, height=height)
     }
 }
 
 ## Save a dataframe as an rds file to a specified directory
 # filename is : dataframeName_{user input string}.rds or dataframeName.rds if no tag provided
 saveDFrds<-function(inputDF, tag=NULL, od=outputDir){
+    # check if od ends with /, add if not
+    if(substr(od, nchar(od), nchar(od)) != "/"){ od<-paste0(od,"/") }
+    
     dfName<-substitute(inputDF)
     if(is.null(tag)){
-        outputPath<-paste(od,dfName,".rds",sep="")
+        outputPath<-paste0(od,dfName,".rds")
     } else {
-        outputPath<-paste(od,dfName,"_",tag,".rds",sep="")
+        outputPath<-paste0(od,dfName,"_",tag,".rds")
     }
     print(outputPath)
     saveRDS(inputDF, outputPath)
@@ -81,11 +109,14 @@ saveDFrds<-function(inputDF, tag=NULL, od=outputDir){
 ## Save a dataframe as a csv file to a specified directory
 # filename is : dataframeName_{user input string}.csv or dataframeName.csv if no tag provided
 saveDFcsv<-function(inputDF, tag=NULL, od=outputDir){
+    # check if od ends with /, add if not
+    if(substr(od, nchar(od), nchar(od)) != "/"){ od<-paste0(od,"/") }
+    
     dfName<-substitute(inputDF)
     if(is.null(tag)){
-        outputPath<-paste(od,dfName,".csv",sep="")
+        outputPath<-paste0(od,dfName,".csv")
     } else {
-        outputPath<-paste(od,dfName,"_",tag,".csv",sep="")
+        outputPath<-paste0(od,dfName,"_",tag,".csv")
     }
     print(outputPath)
     write.csv(inputDF, outputPath)
@@ -137,30 +168,29 @@ concat_dirs<-function(directory=dataDirectory, readFn, filePattern=NULL, minFile
 
 ## Custom column data type processing for RRIV csv data
 process_rriv_columns<-function(df){
+    cols<-names(df)
+    
     df$type<-as.factor(df$type)
     df$site<-as.factor(df$site)
-    df$logger<-as.factor(df$logger)
+    if("logger" %in% cols){
+        df$logger<-as.factor(df$logger)
+    }
     df$deployment<-as.factor(df$deployment)
     df$deployed_at<-as.integer(df$deployed_at)
     df$uuid<-as.factor(df$uuid)
     df$time.s<-as.numeric(df$time.s)
     df$time.h<-lubridate::as_datetime(df$time.h)
-    
-    cols<-names(df)
     if("measurementCycle" %in% cols & "burstCycle" %in% cols){
         df$measurementCycle<-as.numeric(df$measurementCycle)
         df$burstCycle<-as.factor(df$burstCycle)
     }
-    
     ##hardcoded, but could be all columns between time.h and user_note? or measurementCycle when included
     df$battery.V<-as.numeric(df$battery.V)
     df$dht_C<-as.numeric(df$dht_C)
     df$dht_RH<-as.numeric(df$dht_RH)
-    
     if("atlas_CO2_ppm" %in% cols){
         df$atlas_CO2_ppm<-as.numeric(df$atlas_CO2_ppm)
     }
-    
     df$ch4rf_raw<-as.numeric(df$ch4rf_raw)
     df$ch4rf_cal<-as.numeric(df$ch4rf_cal)
     df$ch4_raw<-as.numeric(df$ch4_raw)
@@ -223,8 +253,74 @@ parseIndividualLoggers<-function(df, ll=loggerList, lc=loggerCount){
     return(bind_rows(loggerDataList))
 }
 
+## Function to calculate absolute humidity given a dataframe with a temperature (celsius) and relative humidity (%) column
+calcAbsoluteHumidity<-function(df, celsius="dht_C", relativeHumidity="dht_RH"){
+    #determine water vapor saturation point (https://www.orslabs.fr/pdf/Humidity%20Equations.pdf)
+    P<-1013.25 #millibar, standard pressure ~1 atmosphere
+#     df$ews_mbar<-(1.0007+3.46*10^-6*P)*6.1121^(17.502*df$dht_C/(240.9+df$dht_C))
+    df$ews_mbar<-(1.0007+3.46*10^-6*P)*6.1121^(17.502*df[[celsius]]/(240.9+df[[celsius]]))
+    df$ews_kPa<-df$ews_mbar/10
+
+    #vaisala absolute humidity equation (https://www.hatchability.com/Vaisala.pdf)
+    C<-2.16679 #gK/J
+#     df$aH_gm3<-C*df$ews_kPa*(df$dht_RH/100)*1000/(273.15+df$dht_C)
+    df$aH_gm3<-C*df$ews_kPa*(df[[relativeHumidity]]/100)*1000/(273.15+df[[celsius]])
+
+    return(df)
+}
+
+
+## Function to add a Sensor column based on a dictionary/character vector of named pairs of id = sensor name
+createSensorColFromIDs<-function(df, idCol, dict){
+    ids<-unique(df[[idCol]])
+    for(id in ids){
+        df$Sensor[ df[[idCol]]==id ]<-dict[id]
+    }
+    return(df)
+}
+
+## Function to calculate v0 values for data
+calcV0<-function(df, v0lmFilePath){
+    v0_lm<-readRDS(v0lmFilePath)
+    
+    sensors<-unique(df$Sensor)
+    for(sensor in sensors){
+        print(sensor)
+        lm<-v0_lm[[sensor]][["interactive"]]
+        print(lm)
+        df$v0[df$Sensor == sensor]<-predict(lm,newdata= df[df$Sensor==sensor,])
+    }
+    return(df)
+}
+
+## Function to calculate methane sensor resistance according to Figaro TGS 2611 product information
+calcSensorResistance<-function(df){
+#     df$ch4_mV<-5000/4096*df$ch4_raw
+#     df$v0_mV<-5000/4096*df$v0
+#     df$Rs_mΩ = (5000/df$ch4_mV-1)/(5000/df$v0_mV-1)*1000
+    
+    df$ch4_V<-5/4096*df$ch4_raw
+    df$v0_V<-5/4096*df$v0
+    df$Rs_ohm = (5/df$ch4_V-1)/(5/df$v0_V-1)
+    return(df)
+}
+
+## Function to calculate calibrated CH4 from linear models
+calcCH4_cal<-function(df, lmFilePath){
+    lms<-readRDS(lmFilePath)
+    
+    sensors<-unique(df$Sensor)
+    for(sensor in sensors){
+        print(sensor)
+        lm<-lms[[sensor]]
+        print(lm)
+        df$ch4_cal[df$Sensor==sensor]<-predict(lm,newdata=df[df$Sensor==sensor,])
+    }
+    return(df)
+}
+
 ## Get a custom dictionary of columns to plot and labels for them
-# TODO, subset dict based on presence in names(df)? Which would allow for checking every single column rather than creating a series of if statements?
+# hardcoded labels for specific columns
 getDict<-function(df){
     dict<-c(
         "battery.V"="Battery Digital\nReading (12bit)",
@@ -233,60 +329,66 @@ getDict<-function(df){
         "ch4rf_raw"="Raw Methane Reference\nDigital Reading (12bit)",
         "ch4rf_cal"="Calibrated Methane Reference\nDigital Reading (12bit)",
         "ch4_raw"="Raw Methane Digital\nReading (12bit)",
-        "ch4_cal"="Calibrated Methane Digital\nReading (12bit)"
+        "ch4_cal"="Calibrated Methane Digital\nReading (12bit)",
+        "atlas_CO2_ppm"="\nCO2 (ppm)",
+        "roll_cv"="Rolling Coefficient\nof Variation",
+        "aH_gm3"="Absolute Humidity (g/m^3)"
     )
-    cols<-names(df)
-    if("atlas_CO2_ppm" %in% cols){
-        dict<-append(dict, c("atlas_CO2_ppm"="\nCO2 (ppm)",))
-    }
-    if("roll_cv" %in% cols){
-        dict<-append(dict, c("roll_cv"="Rolling Coefficient\nof Variation"))
-    }
-    return(dict)
+    return( dict[ names(df)[names(df) %in% names(dict) == TRUE] ] )
 }
 
 # 3. Plotting functions
 
 ## function that goes through each item in a variable dictionary and creates a basic plot of variable vs a time column, or just x vs y colored by logger/site
-plot_Data_v_Time <-function(df, color="logger", timeCol="time.h", vd=variableDict, vk=variableKeys, vc=variableCount){
-  # initialize list to hold plots
-  DvT = vector('list', vc)
-  names(DvT) = names(vd)
-  
-  # plot each column vs time with all deployments into list
-  for ( i in 1:vc ){
-    DvT[[i]] = ggplot(data=df,aes_string(x=timeCol,y=vk[i],color=color),size=1)+
-      geom_point()+geom_line()+theme_classic(base_size=12)+
-      labs(x="Date", y=vd[i], color=NULL)
-    # +
-    #   scale_color_manual(values=custom_colors2,na.translate=F)+
-    #   scale_x_datetime(date_labels="%m/%d %H",breaks=scales::pretty_breaks(n=4),expand=c(0,60*5))
-  }
-  return(DvT)
+plot_Data_v_Time <-function(df, color="logger", timeCol="time.h"){
+    variableDict<-getDict(df)
+    
+    variableKeys<-names(variableDict)
+    variableCount<-length(variableDict)
+    
+    # initialize list to hold plots
+    DvT = vector('list', variableCount)
+    names(DvT) = variableKeys
+    
+    # plot each column vs time with all deployments into list
+    for ( i in 1:variableCount ){
+        DvT[[i]] = ggplot(data=df,aes_string(x=timeCol,y=variableKeys[i],color=color),size=1)+
+        geom_point()+geom_line()+theme_classic(base_size=12)+
+        labs(x="Date", y=variableDict[i], color=NULL)#+
+#         scale_color_manual(values=custom_colors2,na.translate=F)+
+#         scale_x_datetime(date_labels="%m/%d %H",breaks=scales::pretty_breaks(n=4),expand=c(0,60*5))
+    }
+    return(DvT)
 }
 
 ## function that goes through and does each series of basic plots of variable vs time.h for each individual logger
 ### TODO, allow for uuid/site instead of logger
 # 1. function can count unique uuid/site occurrences in df and iterate over that
 # 2. title can be column name? or added by user later, or generic "RRIV:"
-plot_individual_logger_data_v_time <-function(df, timeCol="time.h", vd=variableDict, vk=variableKeys, vc=variableCount,
-                                              ll=loggerList, lc=loggerCount){
+plot_individual_logger_data_v_time <-function(df, timeCol="time.h", idCol="uuid"){
+    variableDict<-getDict(df)
+    variableKeys<-names(variableDict)
+    variableCount<-length(variableDict)
+    
+    ids<-unique(df[[idCol]])
+    idCount<-length(ids)
+    
     ## list of lists, where list values are the names of columns and loggers for the deployment
-    output <- vector("list", vc)
-    names(output) <- vk
+    output <- vector("list", variableCount)
+    names(output) <- variableKeys
     
     # initialize empty double list to hold plots
-    for(i in 1:vc){
-        output[[ vk[i] ]] <- vector("list", lc)
-        names( output[[ vk[i] ]] ) <- loggerList
+    for(i in 1:variableCount){
+        output[[ variableKeys[i] ]] <- vector("list", idCount)
+        names( output[[ variableKeys[i] ]] ) <- ids
     }
     
     # create plots at respective locations
-    for(i in 1:vc){
-        for(j in 1:lc){
-          output[[ vk[i] ]][[ ll[j] ]] = ggplot(data=subset(df, logger==ll[j]))+
-            geom_point(aes_string(x=timeCol,y=vk[i]),size=1)+theme_classic(base_size=12)+
-            ylab(vd[i])+xlab("Date")+ggtitle(paste("Logger: ",ll[j],sep=""))
+    for(i in 1:variableCount){
+        for(j in 1:idCount){
+          output[[ variableKeys[i] ]][[ ids[j] ]] = ggplot(data=df[df[[idCol]]==ids[j],])+
+            geom_point(aes_string(x=timeCol,y=variableKeys[i]),size=1)+theme_classic(base_size=12)+
+            ylab(variableDict[i])+xlab("Date")+ggtitle(paste0("ID: ",ids[j]))
           # +
           #   scale_color_manual(values=custom_colors2,na.translate=F)+
           #   scale_x_datetime(date_labels="%m/%d %H",breaks=scales::pretty_breaks(n=4),expand=c(0,60*120))
@@ -294,3 +396,33 @@ plot_individual_logger_data_v_time <-function(df, timeCol="time.h", vd=variableD
     }
     return(output)
 }
+
+
+## function that subsets a dataset for each hour of a chosen posix time column, then creates plots and saves them, colored by a chosen id column
+hourlyPlotsvTime<-function(df, timeCol="time.h", id="site", od=outputDir){
+    oneHour=1*60*60
+    rangeStart<-round( range(df[[timeCol]])[1], units="hours" )
+    rangeEnd<-round( range(df[[timeCol]])[2], units ="hours")
+    
+    # check if od ends with /, add if not
+    if(substr(od, nchar(od), nchar(od)) != "/"){ od<-paste0(od,"/") }
+    
+    # create output directory for hourly plots
+    h_od = paste0(od, "hourlyPlots/")
+    newDir(h_od)
+
+    hour = 1
+    while(rangeStart < rangeEnd){
+        subsetEnd<-rangeStart+oneHour
+
+        subset<-df[ df[[timeCol]]>rangeStart & df[[timeCol]]<subsetEnd ,]
+        sitePlots<-plot_Data_v_Time(subset, id)
+
+        savePlotList(sitePlots, tag=hour, od=h_od)
+
+        rangeStart=rangeStart+oneHour
+        hour=hour+1
+    }
+}
+
+

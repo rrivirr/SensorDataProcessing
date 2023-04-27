@@ -186,8 +186,14 @@ process_rriv_columns<-function(df){
     }
     ##hardcoded, but could be all columns between time.h and user_note? or measurementCycle when included
     df$battery.V<-as.numeric(df$battery.V)
-    df$dht_C<-as.numeric(df$dht_C)
-    df$dht_RH<-as.numeric(df$dht_RH)
+    if("dht_C" %in% cols){
+        df$dht_C<-as.numeric(df$dht_C)
+        df$dht_RH<-as.numeric(df$dht_RH)
+    }
+    if("aht_C" %in% cols){
+        df$aht_C<-as.numeric(df$aht_C)
+        df$aht_RH<-as.numeric(df$aht_RH)
+    }
     if("atlas_CO2_ppm" %in% cols){
         df$atlas_CO2_ppm<-as.numeric(df$atlas_CO2_ppm)
     }

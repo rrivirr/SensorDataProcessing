@@ -332,6 +332,8 @@ getDict<-function(df){
         "battery.V"="Battery Digital\nReading (12bit)",
         "dht_C"="\nTemperature (°C)",
         "dht_RH"="\nRelative Humidity (%)",
+        "aht_C"="\nTemperature (°C)",
+        "aht_RH"="\nRelative Humidity (%)",
         "ch4rf_raw"="Raw Methane Reference\nDigital Reading (12bit)",
         "ch4rf_cal"="Calibrated Methane Reference\nDigital Reading (12bit)",
         "ch4_raw"="Raw Methane Digital\nReading (12bit)",

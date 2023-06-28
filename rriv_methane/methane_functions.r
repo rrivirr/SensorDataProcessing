@@ -51,19 +51,14 @@ writeFile<-function(lines, filePath){
     writeLines(lines, fd)
     close(fd)
 }
-
-
-#800 is a little over 5" on my screen at 1920x1080
-savePlot<-function(plot, tag="", width=800, height=800, od=outputDir){
-    # check if od ends with /, add if not
+#save single plot 
+savePlot<-function(plot, tag="",width=800,height=800,od=outputDir){
     if(substr(od, nchar(od), nchar(od)) != "/"){ od<-paste0(od,"/") }
-    
-    pngPath=paste0(od,tag,".png")
-    png(file=pngPath, width=width, height=height)
-    print(plot)
-    dev.off()
+        pngPath = paste0(od, deparse(substitute(plot)),"_",tag, ".png")
+        png(file = pngPath, width=width, height=height)
+        print(plot)
+        dev.off()
 }
-
 
 #input: list of plots , output directory, custom directory path or tag
     # class(plotList) should return 'list'
@@ -78,21 +73,17 @@ savePlotList<-function(plotList, tag="", width=800, height=800, od=outputDir){
     # check if plots have names or not, incorporate into file name or not
     if(is.null(plots)){
         for(i in 1:length(plotList)){
-            tag=paste0(tag, "_", i)
-            savePlot(plotList[[ i ]], tag, width, height, od)
-#             pngPath = paste0(od, tag, "_", i, ".png")
-#             png(file=pngPath, width=width, height=height)
-#             print(plotList[[ i ]])
-#             dev.off()
+            pngPath = paste0(od, tag, "_", i, ".png")
+            png(file=pngPath, width=width, height=height)
+            print(plotList[[ i ]])
+            dev.off()
         }
     } else {
         for(i in 1:length(plots)){
-            tag=paste0(tag, "_", plots[i])
-            savePlot(plostlist[[ plots[i] ]], tag, width, height, od)
-#             pngPath = paste0(od, tag, "_", plots[i], ".png")
-#             png(file=pngPath, width=width, height=height)
-#             print(plotList[[ plots[i] ]])
-#             dev.off()
+            pngPath = paste0(od, tag, "_", plots[i], ".png")
+            png(file=pngPath, width=width, height=height)
+            print(plotList[[ plots[i] ]])
+            dev.off()
         }
     }
 }
@@ -145,9 +136,9 @@ saveDFcsv<-function(inputDF, tag=NULL, od=outputDir){
 # some files have lines with issues that offest the data,
 # which can be seen by checking if there is a logger value present, and removing if not
 read_rriv_CSV<-function(filepath){
-    fileData<-read.csv(filepath,header=TRUE)
-    fileData<-fileData[fileData[1] != "debug",] # changing for old conductivity data, might need to change back
-#     fileData<-subset(fileData, type!="debug" & !is.na(logger))
+#     fileData<-read.csv(filepath,header=TRUE)
+    fileData<-read_csv(filepath,col_names=TRUE,col_types=cols(.default="c"))
+    fileData<-subset(fileData, type!="debug" & !is.na(logger))
 }
 
 ## Custom readZIP function for Gas Analzyer data
@@ -182,7 +173,8 @@ concat_dirs<-function(directory=dataDirectory, readFn, filePattern=NULL, minFile
     
     #read each file and output a single dataframe
     ###TODO, rbind rows even if their columns don't align, names() returns different results, custom rbind?
-    data<-do.call(rbind, lapply(Files, readFn))
+#     data<-do.call(rbind, lapply(Files, readFn))
+    data<-do.call(bind_rows, lapply(Files, readFn))
     
     print("Dataframe generated, manually process column types if necessary")
     return(data)

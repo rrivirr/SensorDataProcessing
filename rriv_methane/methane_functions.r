@@ -54,6 +54,7 @@ writeFile<-function(lines, filePath){
 
 
 #800 is a little over 5" on my screen at 1920x1080
+#todo: add units, default to pixels, check other options for png()
 savePlot<-function(plot, tag="", width=800, height=800, od=outputDir){
     # check if od ends with /, add if not
     if(substr(od, nchar(od), nchar(od)) != "/"){ od<-paste0(od,"/") }
@@ -145,8 +146,13 @@ saveDFcsv<-function(inputDF, tag=NULL, od=outputDir){
 # some files have lines with issues that offest the data,
 # which can be seen by checking if there is a logger value present, and removing if not
 read_rriv_CSV<-function(filepath){
-    fileData<-read.csv(filepath,header=TRUE)
-    fileData<-fileData[fileData[1] != "debug",] # changing for old conductivity data, might need to change back
+    fileData<-read_csv(filepath,col_names=TRUE,col_types=cols(.default="c"))
+ 
+#     for(name in names(dileData){
+#         fileData[[name]]<-as.character(fileData[[name]])
+#     }
+    
+    fileData<-fileData[fileData[1] != "debug" & fileData[1] != "",] # changing for old conductivity data, might need to change back
 #     fileData<-subset(fileData, type!="debug" & !is.na(logger))
 }
 
@@ -182,7 +188,7 @@ concat_dirs<-function(directory=dataDirectory, readFn, filePattern=NULL, minFile
     
     #read each file and output a single dataframe
     ###TODO, rbind rows even if their columns don't align, names() returns different results, custom rbind?
-    data<-do.call(rbind, lapply(Files, readFn))
+    data<-do.call(bind_rows, lapply(Files, readFn))
     
     print("Dataframe generated, manually process column types if necessary")
     return(data)
@@ -307,6 +313,15 @@ createSensorColFromIDs<-function(df, idCol, dict){
     ids<-unique(df[[idCol]])
     for(id in ids){
         df$Sensor[ df[[idCol]]==id ]<-dict[id]
+    }
+    return(df)
+}
+
+## Function to add a New column based on a dictionary/character vector of named pairs of id = sensor name
+createNewColFromIDs<-function(df, idCol, newCol, dict){
+    ids<-unique(df[[idCol]])
+    for(id in ids){
+        df[[ newCol ]][ df[[idCol]]==id ]<-dict[id]
     }
     return(df)
 }

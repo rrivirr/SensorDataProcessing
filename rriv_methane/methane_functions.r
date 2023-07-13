@@ -14,10 +14,12 @@ clearMemory<-function(){
 ## Take a list of packages, install them to the local library, if necessary, and then load them all
 packageHandler<-function(packageList=packages){
     # Install packages if necessary
-    installed_packages <- packages %in% rownames(installed.packages())
-    if (any(installed_packages == FALSE)) {
-      install.packages(packages[!installed_packages])
-    }
+#     installed_packages <- packages %in% rownames(installed.packages())
+#     if (any(installed_packages == FALSE)) {
+#       install.packages(packages[!installed_packages])
+#     }
+    # will it crash if there's no packages to install?
+    install.packages( packages[ !( packages %in% rownames( installed.packages() ) ) ] )
 
     # Load packages
     invisible(lapply(packages, library, character.only = TRUE))
@@ -154,6 +156,7 @@ read_rriv_CSV<-function(filepath){
     
     fileData<-fileData[fileData[1] != "debug" & fileData[1] != "",] # changing for old conductivity data, might need to change back
 #     fileData<-subset(fileData, type!="debug" & !is.na(logger))
+    return(as.data.frame(fileData))
 }
 
 ## Custom readZIP function for Gas Analzyer data
